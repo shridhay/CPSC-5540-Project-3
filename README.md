@@ -1,4 +1,4 @@
-# CPSC 5540 Project 3: SAT Solving
+# CPSC 5540 Project 3: SAT Solver
 
 This implementation was developed by Jonathan Chen and Hridhay Suresh.
 
