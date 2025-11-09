@@ -12,36 +12,73 @@ import copy
 import itertools
 
 def and_(l):
-    if len(l) == 0:
-        return True
-    elif len(l) == 1:
-        return bool(l[0]) 
-    else:   
-        return bool(l[0]) and and_(l[1:])
+    return all(l)
+    # if len(l) == 0:
+    #     return True
+    # elif len(l) == 1:
+    #     return bool(l[0]) 
+    # else:   
+    #     return bool(l[0]) and bool(and_(l[1:]))
 
 def or_(l):
-    if len(l) == 0:
-        return False
-    elif len(l) == 1:
-        return bool(l[0])
-    else:
-        return bool(l[0]) or or_(l[1:])
+    return any(l)
+    # if len(l) == 0:
+    #     return False
+    # elif len(l) == 1:
+    #     return bool(l[0])
+    # else:
+    #     return bool(l[0]) or bool(or_(l[1:]))
     
-class SAT:
+def not_(l):
+    return None if l is None else not(l)
+    # if l is None:
+    #     return None
+    # else:
+    #     if l == True:
+    #         return False
+    #     elif l == False:
+    #         return True
 
-    def __init__(self, numOfVars, numOfClauses, listOfClauses):
+class SAT:
+    def __init__(self, numOfVars, numOfClauses):
         self.nbvar = numOfVars
         self.nbclauses = numOfClauses
-        self.clauses = copy.deepcopy(listOfClauses)
-        self.d = {i : True for i in range(self.nbvar)}
+        self.clauses = []
+        self.d = {i + 1: True for i in range(self.nbvar)}
+    
+    def parse_line(self, line):
+        self.clauses.append(list(map(int, line.split()))[:-1])
+
+    def parse_idx(self, idx):
+        if idx > 0:
+            return self.d[idx]
+        elif idx < 0:
+            return not_(self.d[-idx])
+        else:
+            return None
+        
+    def print_clauses(self):
+        print(self.clauses)
 
     def pretty(self) -> str:
-        pass
+        clause_strs = []
+        for clause in self.clauses:
+            literals = []
+            for var in clause:
+                if var < 0:
+                    literals.append(f"~x{-var}")
+                else:
+                    literals.append(f"x{var}")
+            clause_strs.append("(" + " \\/ ".join(literals) + ")")
+        return " /\\ ".join(clause_strs)
+    
+    def display(self):
+        print(self.pretty())
     
     def getVars(self) -> list[str]:
         pass
-    
-    def coef(self) -> list[str]:
+
+    def solve(self):
         pass
     
     def check_sat(self):
@@ -50,11 +87,9 @@ class SAT:
         """
         pass
 
-
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         path = str(sys.argv[1])        
-        clauses = []
         try:
             with open(path, 'r') as f:
                 for line in f:
@@ -65,10 +100,11 @@ if __name__ == "__main__":
                         lst = line.split()
                         nbvar = int(lst[2])
                         nbclauses = int(lst[3])
+                        c = SAT(nbvar, nbclauses)
                     else:
                         print(line)
-                        clauses.append(list(map(int, line.split())))
-            c = SAT(nbvar, nbclauses, clauses)
+                        c.parse_line(line)
+            c.display()
         except FileNotFoundError:
             print(f"Error: File '{path}' not found.")
     else:
