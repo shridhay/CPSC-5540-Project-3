@@ -10,6 +10,6 @@ This program also requires the `numpy` library version 2.2.6, which can be insta
 
 ## Quick Start
 
-To test on a benchmark 1, run `python solver.py "benchmarks/sat/bench1.txt"`.
+To test on a benchmark 1, run `python solver.py benchmarks/sat/bench1.txt`.
 
 For convenience we have included `./run_tests.sh` which runs over all benchmarks. This shell file can be executed directly after `chmod +x run_tests.sh`, or indirectly via `sh run_tests.sh`.
