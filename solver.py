@@ -75,6 +75,12 @@ class SAT:
     
     def display(self):
         print(self.pretty())
+
+    def random_assignment(self):
+        pass
+
+    def print_assignment(self):
+        pass
     
     def getVars(self) -> list[str]:
         pass
