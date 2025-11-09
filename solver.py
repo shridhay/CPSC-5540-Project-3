@@ -44,7 +44,7 @@ class SAT:
         self.nbvar = numOfVars
         self.nbclauses = numOfClauses
         self.clauses = []
-        self.d = {i + 1: True for i in range(self.nbvar)}
+        self.d = {i + 1: None for i in range(self.nbvar)}
     
     def parse_line(self, line):
         self.clauses.append(list(map(int, line.split()))[:-1])
