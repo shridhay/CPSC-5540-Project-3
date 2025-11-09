@@ -27,4 +27,12 @@ def or_(l):
         return bool(l[0]) or or_(l[1:])
 
 if __name__ == "__main__":
-    pass
+    if len(sys.argv) > 1:
+        path = str(sys.argv[1])        
+        try:
+            with open(path, 'r') as f:
+                pass
+        except FileNotFoundError:
+            print(f"Error: File '{path}' not found.")
+    else:
+        print("Usage: python process_file.py <path_to_text_file>")
