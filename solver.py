@@ -9,6 +9,7 @@ from functools import reduce
 import sys
 import time
 import copy
+import itertools
 
 def and_(l):
     if len(l) == 0:
@@ -25,13 +26,35 @@ def or_(l):
         return bool(l[0])
     else:
         return bool(l[0]) or or_(l[1:])
+    
+class SAT:
+
+    def __init__(self, numOfVars, numOfClauses, listOfClauses):
+        self.nbvar = numOfVars
+        self.nbclauses = numOfClauses
+        self.clauses = copy.deepcopy(listOfClauses)
+        self.d = {i : True for i in range(self.nbvar)}
+
+    def pretty(self) -> str:
+        pass
+    
+    def getVars(self) -> list[str]:
+        pass
+    
+    def coef(self) -> list[str]:
+        pass
+    
+    def check_sat(self):
+        """
+        Prints a satisfying solution. Does not return anything.
+        """
+        pass
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         path = str(sys.argv[1])        
         clauses = []
-        nbvar = 0
-        nbclauses = 0
         try:
             with open(path, 'r') as f:
                 for line in f:
@@ -45,6 +68,7 @@ if __name__ == "__main__":
                     else:
                         print(line)
                         clauses.append(list(map(int, line.split())))
+            c = SAT(nbvar, nbclauses, clauses)
         except FileNotFoundError:
             print(f"Error: File '{path}' not found.")
     else:
