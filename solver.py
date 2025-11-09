@@ -12,32 +12,33 @@ import copy
 import itertools
 
 def and_(l):
-    return all(l)
-    # if len(l) == 0:
-    #     return True
-    # elif len(l) == 1:
-    #     return bool(l[0]) 
-    # else:   
-    #     return bool(l[0]) and bool(and_(l[1:]))
+    if len(l) == 0:
+        return True
+    elif len(l) == 1:
+        return bool(l[0]) 
+    elif bool(l[0]) == False:
+        return False
+    elif bool(l[0]) == True:
+        return bool(l[0]) and bool(and_(l[1:]))
 
 def or_(l):
-    return any(l)
-    # if len(l) == 0:
-    #     return False
-    # elif len(l) == 1:
-    #     return bool(l[0])
-    # else:
-    #     return bool(l[0]) or bool(or_(l[1:]))
+    if len(l) == 0:
+        return False
+    elif len(l) == 1:
+        return bool(l[0])
+    elif bool(l[0]) == True:
+        return True
+    elif bool(l[0]) == False:
+        return bool(l[0]) or bool(or_(l[1:]))
     
 def not_(l):
-    return None if l is None else not(l)
-    # if l is None:
-    #     return None
-    # else:
-    #     if l == True:
-    #         return False
-    #     elif l == False:
-    #         return True
+    if l is None:
+        return None
+    else:
+        if l == True:
+            return False
+        elif l == False:
+            return True
 
 class SAT:
     def __init__(self, numOfVars, numOfClauses):
