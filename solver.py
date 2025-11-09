@@ -10,6 +10,21 @@ import sys
 import time
 import copy
 
+def and_(l):
+    if len(l) == 0:
+        return True
+    elif len(l) == 1:
+        return bool(l[0]) 
+    else:   
+        return bool(l[0]) and and_(l[1:])
+
+def or_(l):
+    if len(l) == 0:
+        return False
+    elif len(l) == 1:
+        return bool(l[0])
+    else:
+        return bool(l[0]) or or_(l[1:])
 
 if __name__ == "__main__":
     pass
