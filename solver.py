@@ -29,10 +29,23 @@ def or_(l):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         path = str(sys.argv[1])        
+        clauses = []
+        nbvar = 0
+        nbclauses = 0
         try:
             with open(path, 'r') as f:
-                pass
+                for line in f:
+                    if line[0] == 'c':
+                        continue
+                    elif line[0] == 'p':
+                        print(line)
+                        lst = line.split()
+                        nbvar = int(lst[2])
+                        nbclauses = int(lst[3])
+                    else:
+                        print(line)
+                        clauses.append(list(map(int, line.split())))
         except FileNotFoundError:
             print(f"Error: File '{path}' not found.")
     else:
-        print("Usage: python process_file.py <path_to_text_file>")
+        print("Usage: python solver.py <path_to_text_file>")
