@@ -12,42 +12,48 @@ import copy
 import itertools
 import random
 
-def and_(l):
-    if len(l) == 0 or l is None:
-        return True
-    elif len(l) == 1:
-        return bool(l[0]) 
-    elif bool(l[0]) == False:
-        return False
-    elif bool(l[0]) == True:
-        return bool(l[0]) and bool(and_(l[1:]))
+# def and_(l):
+#     if len(l) == 0 or l is None:
+#         return True
+#     elif len(l) == 1:
+#         return bool(l[0]) 
+#     elif bool(l[0]) == False:
+#         return False
+#     elif bool(l[0]) == True:
+#         return bool(l[0]) and bool(and_(l[1:]))
 
-def or_(l):
-    if len(l) == 0 or l is None:
-        return False
-    elif len(l) == 1:
-        return bool(l[0])
-    elif bool(l[0]) == True:
-        return True
-    elif bool(l[0]) == False:
-        return bool(l[0]) or bool(or_(l[1:]))
+# def or_(l):
+#     if len(l) == 0 or l is None:
+#         return False
+#     elif len(l) == 1:
+#         return bool(l[0])
+#     elif bool(l[0]) == True:
+#         return True
+#     elif bool(l[0]) == False:
+#         return bool(l[0]) or bool(or_(l[1:]))
     
-def not_(l):
-    if l is None:
-        return None
-    else:
-        if l == True:
-            return False
-        elif l == False:
-            return True
+# def not_(l):
+#     if l is None:
+#         return None
+#     else:
+#         if l == True:
+#             return False
+#         elif l == False:
+#             return True
 
 class SAT:
     def __init__(self, numOfVars, numOfClauses):
         self.nbvars = numOfVars
         self.nbclauses = numOfClauses
         self.clauses = []
-        self.d = {i + 1: None for i in range(self.nbvars)}
+        self.d = {i: None for i in range(1, self.nbvars + 1)}
         self.stack = []
+        self.nbunassigned = numOfVars
+        self.unassignedKeys = list(range(1, self.nbvars + 1))
+
+    def update(self):
+        self.unassignedKeys = [key for key in self.d.keys() if self.d[key] is None]
+        self.nbunassigned = len(self.unassignedKeys)
     
     def parse_line(self, line):
         self.clauses.append(list(map(int, line.split()))[:-1])
@@ -56,7 +62,7 @@ class SAT:
         if idx > 0:
             return self.d[idx]
         elif idx < 0:
-            return not_(self.d[-idx])
+            return not(self.d[-idx])
         else:
             return None
         
@@ -69,6 +75,9 @@ class SAT:
     def print_nbclauses(self):
         print(self.nbclauses)
 
+    def display(self):
+        print(self.pretty())
+
     def pretty(self) -> str:
         clause_strs = []
         for clause in self.clauses:
@@ -80,16 +89,53 @@ class SAT:
                     literals.append(f"x{literal}")
             clause_strs.append("(" + " \\/ ".join(literals) + ")")
         return " /\\ ".join(clause_strs)
-    
-    def display(self):
-        print(self.pretty())
 
     def choose_random_variable(self):
-        lst = [key for key in self.d.keys() if not(self.d[key] is None)]
-        if len(lst) == 0:
+        self.update()
+        if self.nbunassigned == 0:
             return None
         else:
-            return random.choice(lst)
+            return random.choice(self.unassignedKeys)
+        
+    # def choose_random_assignment(self):
+    #     assign_dict = copy.deepcopy(self.d)
+    #     for key in assign_dict:
+    #         assign_dict[key] = random.choice([True, False])
+    #     return assign_dict
+    
+    # def set_random_assignment(self, idx):
+    #     if idx in self.d.keys():
+    #         self.d[idx] = random.choice([True, False])
+    #         return True
+    #     else:
+    #         return False
+
+    def check_sat(self):
+        pass
+
+    def set_assignment(self, idx, b):
+        if idx in self.d.keys():
+            self.d[idx] = b
+            return True
+        else:
+            return False        
+
+    def stack_push(self, idx, b):
+        if idx in self.d.keys():
+            self.stack.append((idx, b, self.nbunassigned))
+            return True
+        else:
+            return False
+
+    def stack_pop(self):
+        if not(self.empty()):
+            return self.stack.pop()
+
+    def empty(self):
+        if len(self.stack) == 0:
+            return True
+        else:
+            return False
         
     def run_dpll(self):
         pass
@@ -115,7 +161,7 @@ class SAT:
     def solve(self):
         pass
     
-    def check_sat(self):
+    def unit_propogation(self):
         pass
 
 if __name__ == "__main__":
