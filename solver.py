@@ -46,10 +46,10 @@ class SAT:
         self.nbvars = numOfVars
         self.nbclauses = numOfClauses
         self.clauses = []
-        self.d = {i: None for i in range(1, self.nbvars + 1)}
-        self.stack = []
         self.nbunassigned = numOfVars
-        self.unassignedKeys = list(range(1, self.nbvars + 1))
+        self.d = {i: None for i in range(1, self.nbvars + 1)}
+        self.unassignedKeys = list(self.d.keys())
+        self.stack = []
 
     def update(self):
         self.unassignedKeys = [key for key in self.d.keys() if self.d[key] is None]
@@ -92,7 +92,7 @@ class SAT:
 
     def choose_random_literal(self):
         self.update()
-        if self.nbunassigned == 0:
+        if self.stack_empty():
             return None
         else:
             return random.choice(self.unassignedKeys)
@@ -112,7 +112,7 @@ class SAT:
 
     def check_sat(self):
         self.update()
-        if self.nbunassigned == 0:
+        if self.stack_empty():
             return all(any(map(self.parse_idx, clause)) for clause in self.clauses)
         else:
             return None
@@ -127,6 +127,7 @@ class SAT:
             return False        
 
     def stack_push(self, idx, b):
+        self.update()
         if idx in self.d.keys():
             self.stack.append((idx, b, self.nbunassigned))
             return True
@@ -134,25 +135,29 @@ class SAT:
             return False
 
     def stack_pop(self):
-        if not(self.empty()):
+        if not(self.stack_empty()):
             return self.stack.pop()
-
-    def empty(self):
-        if len(self.stack) == 0:
-            return True
         else:
-            return False
+            return None
+
+    def stack_empty(self):
+        return len(self.stack) == 0
+    
+    def stack_print(self):
+        for idx in range(len(self.stack)-1, -1, -1):
+            print(f"{self.stack[idx]}")
         
+    def print_assignment(self):
+        for key in self.d.keys():
+            print(f"x{key} : {self.d[key]}")
+
+    def get_assignment(self):
+        return self.d
+
     def run_dpll(self):
         pass
     
     def dpll(self):
-        pass
-        
-    def print_assignment(self):
-        pass
-
-    def get_assignment(self):
         pass
     
     def getVars(self):
@@ -168,6 +173,9 @@ class SAT:
         pass
     
     def unit_propogation(self):
+        pass
+
+    def pure_literal_elimination(self):
         pass
 
 if __name__ == "__main__":
