@@ -90,7 +90,7 @@ class SAT:
             clause_strs.append("(" + " \\/ ".join(literals) + ")")
         return " /\\ ".join(clause_strs)
 
-    def choose_random_variable(self):
+    def choose_random_literal(self):
         self.update()
         if self.nbunassigned == 0:
             return None
@@ -111,13 +111,19 @@ class SAT:
     #         return False
 
     def check_sat(self):
-        pass
+        self.update()
+        if self.nbunassigned == 0:
+            return all(any(map(self.parse_idx, clause)) for clause in self.clauses)
+        else:
+            return None
 
     def set_assignment(self, idx, b):
         if idx in self.d.keys():
             self.d[idx] = b
+            self.update()
             return True
         else:
+            self.update()
             return False        
 
     def stack_push(self, idx, b):
