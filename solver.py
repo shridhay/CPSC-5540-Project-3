@@ -10,9 +10,10 @@ import sys
 import time
 import copy
 import itertools
+import random
 
 def and_(l):
-    if len(l) == 0:
+    if len(l) == 0 or l is None:
         return True
     elif len(l) == 1:
         return bool(l[0]) 
@@ -22,7 +23,7 @@ def and_(l):
         return bool(l[0]) and bool(and_(l[1:]))
 
 def or_(l):
-    if len(l) == 0:
+    if len(l) == 0 or l is None:
         return False
     elif len(l) == 1:
         return bool(l[0])
@@ -42,10 +43,10 @@ def not_(l):
 
 class SAT:
     def __init__(self, numOfVars, numOfClauses):
-        self.nbvar = numOfVars
+        self.nbvars = numOfVars
         self.nbclauses = numOfClauses
         self.clauses = []
-        self.d = {i + 1: None for i in range(self.nbvar)}
+        self.d = {i + 1: None for i in range(self.nbvars)}
     
     def parse_line(self, line):
         self.clauses.append(list(map(int, line.split()))[:-1])
@@ -60,38 +61,57 @@ class SAT:
         
     def print_clauses(self):
         print(self.clauses)
+    
+    def print_nbvars(self):
+        print(self.nbvars)
+
+    def print_nbclauses(self):
+        print(self.nbclauses)
 
     def pretty(self) -> str:
         clause_strs = []
         for clause in self.clauses:
             literals = []
-            for var in clause:
-                if var < 0:
-                    literals.append(f"~x{-var}")
+            for literal in clause:
+                if literal < 0:
+                    literals.append(f"~x{-literal}")
                 else:
-                    literals.append(f"x{var}")
+                    literals.append(f"x{literal}")
             clause_strs.append("(" + " \\/ ".join(literals) + ")")
         return " /\\ ".join(clause_strs)
     
     def display(self):
         print(self.pretty())
 
-    def random_assignment(self):
+    def choose_random_variable(self):
+        lst = [key for key in self.d.keys() if not(self.d[key] is None)]
+        if len(lst) == 0:
+            return None
+        else:
+            return random.choice(lst)
+    
+    def dpll(self):
         pass
-
+        
     def print_assignment(self):
         pass
+
+    def get_assignment(self):
+        pass
     
-    def getVars(self) -> list[str]:
+    def getVars(self):
+        pass
+
+    def push_literal(self):
+        pass
+
+    def push_clause(self):
         pass
 
     def solve(self):
         pass
     
     def check_sat(self):
-        """
-        Prints a satisfying solution. Does not return anything.
-        """
         pass
 
 if __name__ == "__main__":
@@ -105,9 +125,7 @@ if __name__ == "__main__":
                     elif line[0] == 'p':
                         print(line)
                         lst = line.split()
-                        nbvar = int(lst[2])
-                        nbclauses = int(lst[3])
-                        c = SAT(nbvar, nbclauses)
+                        c = SAT(int(lst[2]), int(lst[3]))
                     else:
                         print(line)
                         c.parse_line(line)
