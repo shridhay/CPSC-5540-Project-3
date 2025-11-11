@@ -47,6 +47,7 @@ class SAT:
         self.nbclauses = numOfClauses
         self.clauses = []
         self.d = {i + 1: None for i in range(self.nbvars)}
+        self.stack = []
     
     def parse_line(self, line):
         self.clauses.append(list(map(int, line.split()))[:-1])
@@ -89,6 +90,9 @@ class SAT:
             return None
         else:
             return random.choice(lst)
+        
+    def run_dpll(self):
+        pass
     
     def dpll(self):
         pass
