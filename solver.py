@@ -1,15 +1,15 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import re
+# import re
 from typing import Self, Union
 import numpy as np
 from fractions import Fraction
 from functools import reduce
 import sys
-import time
+# import time
 import copy
-import itertools
+# import itertools
 import random
 
 # def and_(l):
@@ -67,6 +67,9 @@ class SAT:
             return None
         else:
             return None
+        
+    def all_assigned(self):
+        return {True, False} >= set(self.d.values())
         
     def print_clauses(self):
         print(self.clauses)
@@ -195,7 +198,7 @@ class SAT:
 
     def push_clause(self):
         pass
-    
+
     def unit_propogation(self):
         pass
 
