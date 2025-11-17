@@ -1,45 +1,7 @@
 from __future__ import annotations
-# from abc import ABC, abstractmethod
-# from dataclasses import dataclass
-# import re
-# from typing import Self, Union
-# import numpy as np
-# from fractions import Fraction
-# from functools import reduce
 import sys
-# import time
 import copy
-# import itertools
 import random
-
-# def and_(l):
-#     if len(l) == 0 or l is None:
-#         return True
-#     elif len(l) == 1:
-#         return bool(l[0]) 
-#     elif bool(l[0]) == False:
-#         return False
-#     elif bool(l[0]) == True:
-#         return bool(l[0]) and bool(and_(l[1:]))
-
-# def or_(l):
-#     if len(l) == 0 or l is None:
-#         return False
-#     elif len(l) == 1:
-#         return bool(l[0])
-#     elif bool(l[0]) == True:
-#         return True
-#     elif bool(l[0]) == False:
-#         return bool(l[0]) or bool(or_(l[1:]))
-    
-# def not_(l):
-#     if l is None:
-#         return None
-#     else:
-#         if l == True:
-#             return False
-#         elif l == False:
-#             return True
 
 class SAT:
     def __init__(self, numOfVars, numOfClauses):
@@ -194,39 +156,30 @@ class SAT:
         return sol
     
     def backtrack(self, n):
-        while not(self.stack_empty()) and (self.nbunassigned != n):
+        while len(self.stack) > n:
             idx, _, _ = self.stack_pop()
             self.d[idx] = None
-            self.update()
+        self.update()
 
     def dpll(self):
-        # 1. UNIT PROPAGATION
         if not self.unit_propagation():
             return False
-        # 2. PURE LITERAL ELIMINATION
         self.pure_literal_elimination()
         self.update()
-        # 3. If all variables assigned, check clauses
         if self.nbunassigned == 0:
             return all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
-        # 4. Choose a branching variable
         idx = random.choice(self.unassignedKeys)
-        # Store backtracking target (before decision)
-        decision_unassigned = self.nbunassigned
-        # First branch: True
-        self.stack_push(idx, True)
-        self.set_assignment(idx, True)
+        size = len(self.stack)
+        self.d[idx] = True
+        self.update()
         if self.dpll():
             return True
-        # Backtrack
-        self.backtrack(decision_unassigned)
-        # Second branch: False
-        self.stack_push(idx, False)
-        self.set_assignment(idx, False)
+        self.backtrack(size)
+        self.d[idx] = False
+        self.update()
         if self.dpll():
             return True
-        # Backtrack again
-        self.backtrack(decision_unassigned)
+        self.backtrack(size)
         return False
 
     def pure_literal_elimination(self):
@@ -238,32 +191,24 @@ class SAT:
                         positive.add(literal)
                     else:
                         negative.add(-literal)
-        for variable in range(1, self.nbvars + 1):
-            if self.d[variable] is None:
-                if (variable in positive) and not(variable in negative):
-                    self.set_assignment(variable, True)
-                elif (variable in negative) and not(variable in positive):
-                    self.set_assignment(variable, False)
+        for idx in range(1, self.nbvars + 1):
+            if self.d[idx] is None:
+                if (idx in positive) and not(idx in negative):
+                    self.set_assignment(idx, True)
+                elif (idx in negative) and not(idx in positive):
+                    self.set_assignment(idx, False)
         return True
 
     def unit_propagation(self):
-        """
-        Repeatedly apply unit propagation until no more forced literals exist.
-        Returns False if a contradiction is found.
-        """
-        changed = True
-        while changed:
-            changed = False
+        modified = True
+        while modified:
+            modified = False
             for clause in self.clauses:
-                # Clause satisfied -> skip
                 if any(self.parse_idx(literal) is True for literal in clause):
                     continue
-                # Find unassigned literals
                 unassigned_literals = [literal for literal in clause if self.parse_idx(literal) is None]
-                # Clause conflict: all false
                 if len(unassigned_literals) == 0:
                     return False
-                # Unit clause
                 if len(unassigned_literals) == 1:
                     literal = unassigned_literals[0]
                     idx = abs(literal) 
@@ -271,7 +216,7 @@ class SAT:
                     if self.d[idx] is None:
                         self.stack_push(idx, val)
                         self.set_assignment(idx, val)
-                        changed = True
+                        modified = True
         return True
 
 if __name__ == "__main__":
