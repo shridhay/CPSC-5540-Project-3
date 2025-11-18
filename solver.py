@@ -12,6 +12,7 @@ class SAT:
         self.d = {i: None for i in range(1, self.nbvars + 1)}
         self.unassignedKeys = list(self.d.keys())
         self.stack = []
+        self.stack_size = len(self.stack)
         self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
 
     def cold_start(self):
@@ -20,6 +21,7 @@ class SAT:
         self.nbunassigned = len(self.unassignedKeys)
 
     def update(self):
+        self.stack_size = len(self.stack)
         self.unassignedKeys = [key for key in self.d.keys() if self.d[key] is None]
         self.nbunassigned = len(self.unassignedKeys)
     
@@ -73,6 +75,9 @@ class SAT:
 
     def get_nbunassigned(self):
         return self.nbunassigned
+    
+    def get_size(self):
+        return len(self.stack)
 
     def display(self):
         print(self.pretty())
@@ -109,11 +114,14 @@ class SAT:
     #         return False
 
     def check_sat(self):
-        self.update()
-        if self.stack_empty():
-            return all(any(self.parse_idx(literal) is True for literal in clause) for clause in self.clauses)
-        else:
-            return None
+        return all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
+        # self.update()
+        # if self.nbunassigned == 0:
+        # self.update()
+        # if self.stack_empty():
+        #     return all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
+        # else:
+        #     return None
 
     def set_assignment(self, idx, b):
         if idx in self.d.keys():
@@ -162,20 +170,24 @@ class SAT:
         self.update()
 
     def dpll(self):
-        if not self.unit_propagation():
+        if not(self.unit_propagation()):
             return False
         self.pure_literal_elimination()
         self.update()
         if self.nbunassigned == 0:
-            return all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
+            # all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
+            return self.check_sat()
         idx = random.choice(self.unassignedKeys)
-        size = len(self.stack)
-        self.d[idx] = True
+        # size = len(self.stack)
+        size = self.get_size()
+        # self.d[idx] = True
+        self.set_assignment(idx, True)
         self.update()
         if self.dpll():
             return True
         self.backtrack(size)
-        self.d[idx] = False
+        # self.d[idx] = False
+        self.set_assignment(idx, False)
         self.update()
         if self.dpll():
             return True
