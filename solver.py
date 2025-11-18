@@ -67,6 +67,9 @@ class SAT:
         self.update()
         print(self.nbunassigned)
 
+    def all_assigned(self):
+        return self.nbunassigned == 0
+
     def get_clauses(self):
         return copy.deepcopy(self.clauses)
         
@@ -115,14 +118,7 @@ class SAT:
 
     def check_sat(self):
         return all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
-        # self.update()
-        # if self.nbunassigned == 0:
-        # self.update()
-        # if self.stack_empty():
-        #     return all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
-        # else:
-        #     return None
-
+    
     def set_assignment(self, idx, b):
         if idx in self.d.keys():
             self.d[idx] = b
@@ -174,19 +170,15 @@ class SAT:
             return False
         self.pure_literal_elimination()
         self.update()
-        if self.nbunassigned == 0:
-            # all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
+        if self.all_assigned():
             return self.check_sat()
         idx = random.choice(self.unassignedKeys)
-        # size = len(self.stack)
         size = self.get_size()
-        # self.d[idx] = True
         self.set_assignment(idx, True)
         self.update()
         if self.dpll():
             return True
         self.backtrack(size)
-        # self.d[idx] = False
         self.set_assignment(idx, False)
         self.update()
         if self.dpll():
