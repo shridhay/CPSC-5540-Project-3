@@ -10,18 +10,18 @@ class SAT:
         self.clauses = []
         self.nbunassigned = numOfVars
         self.d = {i: None for i in range(1, self.nbvars + 1)}
-        self.unassignedKeys = list(self.d.keys())
+        self.unassignedKeys = set(self.d.keys())
         self.stack = []
         self.stack_size = len(self.stack)
         self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
 
     def cold_start(self):
         self.d = {i: None for i in range(1, self.nbvars + 1)}
-        self.unassignedKeys = list(self.d.keys())
+        self.unassignedKeys = set(self.d.keys())
         self.nbunassigned = len(self.unassignedKeys)
 
     def update(self):
-        self.unassignedKeys = [key for key in self.d.keys() if self.d[key] is None]
+        self.unassignedKeys = {key for key in self.d.keys() if self.d[key] is None}
         self.nbunassigned = len(self.unassignedKeys)
     
     def parse_line(self, line):
@@ -158,8 +158,10 @@ class SAT:
     
     def backtrack(self, n):
         while len(self.stack) > n:
-            idx, _, _, _= self.stack_pop()
+            idx, _, _, _ = self.stack_pop()
             self.d[idx] = None
+            self.unassignedKeys.add(idx)
+            self.nbunassigned += 1
         self.update()
 
     def dpll(self):
@@ -169,7 +171,7 @@ class SAT:
         self.update()
         if self.all_assigned():
             return self.check_sat()
-        idx = random.choice(self.unassignedKeys)
+        idx = random.choice(list(self.unassignedKeys))
         size = self.get_size()
         self.stack_push(idx, True, True)
         self.set_assignment(idx, True)
