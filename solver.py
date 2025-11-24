@@ -47,8 +47,8 @@ class SAT:
         else:
             return not(val)
         
-    def all_assigned(self):
-        return all(value is not None for value in self.d.values())
+    # def all_assigned(self):
+    #     return all(value is not None for value in self.d.values())
         
     def print_clauses(self):
         print(self.clauses)
