@@ -47,8 +47,9 @@ class SAT:
         else:
             return not(val)
         
-    # def all_assigned(self):
-    #     return all(value is not None for value in self.d.values())
+    def all_assigned(self):
+        self.update()
+        return self.nbunassigned == 0
         
     def print_clauses(self):
         print(self.clauses)
@@ -66,9 +67,6 @@ class SAT:
     def print_nbunassigned(self):
         self.update()
         print(self.nbunassigned)
-
-    def all_assigned(self):
-        return self.nbunassigned == 0
 
     def get_clauses(self):
         return copy.deepcopy(self.clauses)
@@ -128,8 +126,8 @@ class SAT:
             self.update()
             return False        
 
-    def stack_push(self, idx, value):
-        self.stack.append((idx, value, self.nbunassigned))
+    def stack_push(self, idx, value, decision):
+        self.stack.append((idx, value, self.nbunassigned, decision))
 
     def stack_pop(self):
         if not(self.stack_empty()):
@@ -161,7 +159,7 @@ class SAT:
     
     def backtrack(self, n):
         while len(self.stack) > n:
-            idx, _, _ = self.stack_pop()
+            idx, _, _, _= self.stack_pop()
             self.d[idx] = None
         self.update()
 
@@ -174,11 +172,13 @@ class SAT:
             return self.check_sat()
         idx = random.choice(self.unassignedKeys)
         size = self.get_size()
+        self.stack_push(idx, True, True)
         self.set_assignment(idx, True)
         self.update()
         if self.dpll():
             return True
         self.backtrack(size)
+        self.stack_push(idx, False, True)
         self.set_assignment(idx, False)
         self.update()
         if self.dpll():
@@ -218,7 +218,7 @@ class SAT:
                     idx = abs(literal) 
                     val = literal > 0
                     if self.d[idx] is None:
-                        self.stack_push(idx, val)
+                        self.stack_push(idx, val, False)
                         self.set_assignment(idx, val)
                         modified = True
         return True
