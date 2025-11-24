@@ -21,7 +21,6 @@ class SAT:
         self.nbunassigned = len(self.unassignedKeys)
 
     def update(self):
-        self.stack_size = len(self.stack)
         self.unassignedKeys = [key for key in self.d.keys() if self.d[key] is None]
         self.nbunassigned = len(self.unassignedKeys)
     
@@ -233,11 +232,11 @@ if __name__ == "__main__":
                     if not(line) or (line[0] in {'c', '%', '0'}):
                         continue
                     elif line[0] == 'p':
-                        print(line)
+                        # print(line)
                         lst = line.split()
                         solver = SAT(int(lst[2]), int(lst[3]))
                     else:
-                        print(line)
+                        # print(line)
                         solver.parse_line(line)
             solver.display()
             solver.solve()
