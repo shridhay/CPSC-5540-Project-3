@@ -230,7 +230,7 @@ if __name__ == "__main__":
             with open(path, 'r') as f:
                 for line in f:
                     line = line.strip()
-                    if not(line) or line[0] == 'c':
+                    if not(line) or (line[0] in {'c', '%', '0'}):
                         continue
                     elif line[0] == 'p':
                         print(line)
