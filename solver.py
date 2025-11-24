@@ -15,7 +15,7 @@ class SAT:
         self.stack_size = len(self.stack)
         self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
 
-    def cold_start(self):
+    def cold_restart(self):
         self.d = {i: None for i in range(1, self.nbvars + 1)}
         self.unassignedKeys = set(self.d.keys())
         self.nbunassigned = len(self.unassignedKeys)
@@ -26,6 +26,12 @@ class SAT:
     
     def parse_line(self, line):
         self.clauses.append(list(map(int, line.split()))[:-1])
+
+    def increment(self):
+        self.nbunassigned += 1
+
+    def decrement(self):
+        self.nbunassigned -= 1
 
     # def parse_idx(self, idx):
     #     if idx > 0:
@@ -176,12 +182,14 @@ class SAT:
         self.stack_push(idx, True, True)
         self.set_assignment(idx, True)
         self.update()
+        # self.nbunassigned -= 1
         if self.dpll():
             return True
         self.backtrack(size)
         self.stack_push(idx, False, True)
         self.set_assignment(idx, False)
         self.update()
+        # self.nbunassigned -= 1
         if self.dpll():
             return True
         self.backtrack(size)
@@ -198,11 +206,14 @@ class SAT:
                         negative.add(-literal)
         for idx in range(1, self.nbvars + 1):
             if self.d[idx] is None:
-                if (idx in positive) and not(idx in negative):
-                    self.set_assignment(idx, True)
-                elif (idx in negative) and not(idx in positive):
-                    self.set_assignment(idx, False)
+                if (idx in positive) ^ (idx in negative):
+                    self.get_assignment(idx, (idx in positive))
         return True
+                # if (idx in positive) and not(idx in negative):
+                #     self.set_assignment(idx, True)
+                # elif (idx in negative) and not(idx in positive):
+                #     self.set_assignment(idx, False)
+        # return True
 
     def unit_propagation(self):
         modified = True
@@ -217,10 +228,9 @@ class SAT:
                 if len(unassigned_literals) == 1:
                     literal = unassigned_literals[0]
                     idx = abs(literal) 
-                    val = literal > 0
                     if self.d[idx] is None:
-                        self.stack_push(idx, val, False)
-                        self.set_assignment(idx, val)
+                        self.stack_push(idx, (literal > 0), False)
+                        self.set_assignment(idx, (literal > 0))
                         modified = True
         return True
 
