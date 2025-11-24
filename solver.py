@@ -47,7 +47,7 @@ class SAT:
             return not(val)
         
     def all_assigned(self):
-        self.update()
+        # self.update()
         return self.nbunassigned == 0
         
     def print_clauses(self):
@@ -60,11 +60,11 @@ class SAT:
         print(self.nbclauses)
 
     def print_unassignedKeys(self):
-        self.update()
+        # self.update()
         print(self.unassignedKeys)
 
     def print_nbunassigned(self):
-        self.update()
+        # self.update()
         print(self.nbunassigned)
 
     def get_clauses(self):
@@ -119,10 +119,10 @@ class SAT:
     def set_assignment(self, idx, b):
         if idx in self.d.keys():
             self.d[idx] = b
-            self.update()
+            # self.update()
             return True
         else:
-            self.update()
+            # self.update()
             return False        
 
     def stack_push(self, idx, value, decision):
@@ -158,17 +158,17 @@ class SAT:
     
     def backtrack(self, n):
         while len(self.stack) > n:
-            idx, _, _, _ = self.stack_pop()
+            idx, _, _, _= self.stack_pop()
             self.d[idx] = None
             self.unassignedKeys.add(idx)
             self.nbunassigned += 1
-        self.update()
+        # self.update()
 
     def dpll(self):
         if not(self.unit_propagation()):
             return False
         self.pure_literal_elimination()
-        self.update()
+        # self.update()
         if self.all_assigned():
             return self.check_sat()
         idx = random.choice(list(self.unassignedKeys))
