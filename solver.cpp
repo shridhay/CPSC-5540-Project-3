@@ -10,6 +10,7 @@
 #include <stack>
 #include <tuple>
 #include <utility>
+#include <ctime>
 #include <random>
 
 using namespace std;
@@ -23,9 +24,12 @@ class SAT {
     stack<tuple<int, bool, int, bool> > s;
     int stack_size = 0;
     unordered_map<int, pair<bool, bool> > d;
+    mt19937 mt_rand;
     
     public:
-        SAT(){}
+        SAT(){
+            mt_rand.seed(time(NULL));
+        }
         void setup(int numOfVars, int numOfClauses){
             nbvars = numOfVars;
             nbunassigned = numOfVars;
@@ -67,7 +71,7 @@ class SAT {
         bool set_assignment(int idx, bool b);
         void stack_push(int idx, bool value, bool decision);
         tuple<int, bool, int, bool> stack_pop();
-        bool stack_empty();
+        bool stack_empty(){return s.empty();}
         void stack_print();
         void print_assignment();
         unordered_map<int, bool> get_assignment();
@@ -76,6 +80,9 @@ class SAT {
         bool dpll();
         bool pure_literal_elimination();
         bool unit_propagation();
+        int getInt(int min, int max){return ((mt_rand() % max) + min);}
+        void reseed(){mt_rand.seed(time(NULL));}
+
 };
 
 int main(int argc, char *argv[]){
