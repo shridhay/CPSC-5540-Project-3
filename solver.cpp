@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cmath>
 #include <vector>
 #include <string>
@@ -21,17 +22,18 @@ class SAT {
     vector<vector<int> > clauses;
     stack<tuple<int, bool, int, bool> > unassigned_keys;
     int stack_size = 0;
-
+    unordered_map<int, pair<bool, bool> > d;
     
     public:
-        SAT(int numOfVars, int numOfClauses) : nbvars(numOfVars), nbunassigned(numOfVars), nbclauses(numOfClauses){
-            
-
-            
+        SAT(){}
+        void setup(int numOfVars, int numOfClauses){
+            nbvars = numOfVars;
+            nbunassigned = numOfVars;
+            nbclauses = numOfClauses;
         }
         void cold_restart();
         void update();
-        void parse_line();
+        void parse_line(string line);
         void increment(){nbunassigned++;}
         void decrement(){nbunassigned--;}
         bool parse_idx(int idx);
@@ -42,7 +44,7 @@ class SAT {
         void print_unassignedKeys();
         void print_nbunassigned();
         vector<vector<int> > get_clauses();
-        vector<int> get_unassignedKeys();
+        vector<int> get_unassigned_keys();
         int get_nbunassigned();
         int get_size();
         void display();
@@ -63,12 +65,31 @@ class SAT {
         bool unit_propagation();
 };
 
-int main(){
-
-    unordered_set<char> exclusion_chars = {'c', '%', '0'};
-    cout << boolalpha;
-    cout << "Hello World" << endl;
+int main(int argc, char *argv[]){
+    if (argc != 2){
+        cout << "Usage: " << endl;
+    }
+    string filename = argv[1];
+    ifstream inputFile(filename);
+    SAT solver;
+    if (!inputFile.is_open()){
+        cout << "Cannot open file: " << filename << endl;
+    }
+    string currentLine, tok;
+    while(getline(inputFile, currentLine)){
+        if (currentLine.empty() || currentLine[0] == 'c' || currentLine[0] == '%' || currentLine[0] == '0'){
+            continue;
+        } else if (currentLine[0] == 'p'){
+            stringstream ss(currentLine);
+            string p, cnf;
+            int numOfVars, numOfClauses;
+            ss >> p >> cnf >> numOfVars >> numOfClauses;
+            solver.setup(numOfVars, numOfClauses);
+        } else {
+            solver.parse_line(currentLine);
+        }
+    }
+    inputFile.close();
     return 0;
-    
 }
 
