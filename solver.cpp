@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <stack>
+#include <set>
 #include <tuple>
 #include <utility>
 #include <ctime>
@@ -25,6 +26,7 @@ class SAT {
     int stack_size = 0;
     unordered_map<int, pair<bool, bool> > d;
     mt19937 mt_rand;
+    set<int> unassigned_keys;
     
     public:
         SAT(){
@@ -34,7 +36,9 @@ class SAT {
             nbvars = numOfVars;
             nbunassigned = numOfVars;
             nbclauses = numOfClauses;
-
+            for(int i = 1; i < nbvars + 1; i++){
+                unassigned_keys.insert(i);
+            }
         }
         void parse_line(string line){
             vector<int> clause;
@@ -49,27 +53,45 @@ class SAT {
             }
             clauses.push_back(clause);
         }
-        void cold_restart();
         void update();
         void increment(){nbunassigned++;}
         void decrement(){nbunassigned--;}
-        bool parse_idx(int idx);
+        // bool parse_idx(int idx){
+        //     if (d.count(abs(idx))){
+        //         if (idx > 0){
+        //             return d[idx];
+        //         } else if (idx < 0){
+        //             return !(d[-1 * idx]);
+        //         }
+        //     } else {
+        //         return NULL;
+        //     }
+        // }
         bool all_assigned(){return nbunassigned == 0;}
-        void print_clauses();
-        void print_nbvars();
-        void print_nbclauses();
-        void print_unassignedKeys();
-        void print_nbunassigned();
+        void print_clauses(){
+            for (const auto& clause : clauses) {
+                for (const auto& elem : clause) {
+                    cout << elem << " ";
+                }
+                cout << endl; 
+            }
+        }
+        void print_nbvars(){cout << to_string(nbvars) << endl;}
+        void print_nbclauses(){cout << to_string(nbclauses) << endl;}
+        void print_unassigned_keys();
+        void print_nbunassigned(){cout << to_string(nbunassigned) << endl;}
         vector<vector<int> > get_clauses();
         vector<int> get_unassigned_keys();
         int get_nbunassigned();
-        int get_size();
+        int get_size(){return s.size();}
         void display();
         string pretty();
         int choose_random_key();
         bool check_sat();
         bool set_assignment(int idx, bool b);
-        void stack_push(int idx, bool value, bool decision);
+        void stack_push(int idx, bool value, bool decision){
+            s.emplace(idx, value, nbunassigned, decision);
+        }
         tuple<int, bool, int, bool> stack_pop();
         bool stack_empty(){return s.empty();}
         void stack_print();
