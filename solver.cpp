@@ -29,9 +29,7 @@ class SAT {
         set<int> unassigned_keys;
         
     public:
-        SAT(){
-            mt_rand.seed(time(NULL));
-        }
+        SAT(){mt_rand.seed(time(NULL));}
         void setup(int numOfVars, int numOfClauses){
             nbvars = numOfVars;
             nbunassigned = numOfVars;
@@ -67,25 +65,30 @@ class SAT {
         }
         void increment(){nbunassigned++;}
         void decrement(){nbunassigned--;}
-        bool parse_idx(int idx){
+        pair<bool, bool> parse_idx(int idx){
             if (d.count(abs(idx))){
                 if (idx > 0){
                     pair<bool, bool> t = d[idx];
                     if (t.first){
-                        return t.second;
+                        pair<bool, bool> p = make_pair(true, t.second);
+                        return p;
                     } else {
-                        // return NULL;
+                        pair<bool, bool> p = make_pair(false, false);
+                        return p;
                     }
                 } else if (idx < 0){
                     pair t = d[idx];
                     if (t.first){
-                        return !(t.second);
+                        pair<bool, bool> p = make_pair(true, !t.second);
+                        return p;
                     } else {
-                        // return NULL;
+                        pair<bool, bool> p = make_pair(false, false);
+                        return p;
                     }
                 }
             } else {
-                // return NULL;
+                pair<bool, bool> p = make_pair(false, false);
+                return p;
             }
         }
         bool all_assigned(){return nbunassigned == 0;}
@@ -128,8 +131,8 @@ class SAT {
             for (const int& key : unassigned_keys) {
                 v.push_back(key);
             }
-            int i = getInt(0, v.size());
-            int val = v.at(i);
+            int idx = getInt(0, v.size());
+            int val = v.at(idx);
             v.clear();
             return val;
         }
@@ -137,6 +140,7 @@ class SAT {
         bool set_assignment(int idx, bool b){
             if (d.count(idx)){
                 d[idx] = make_pair(true, b);
+                update();
                 return true;
             } else {
                 return false;
@@ -177,6 +181,7 @@ class SAT {
             }
         }
         bool unit_propagation();
+        bool pure_literal_elimination(){}
         bool dpll(){
             if (!unit_propagation()) return false;
             update();
@@ -197,8 +202,6 @@ class SAT {
             backtrack(size);
             return false;
         }
-        bool pure_literal_elimination();
-        
 };
 
 int main(int argc, char *argv[]){
