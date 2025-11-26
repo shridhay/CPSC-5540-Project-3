@@ -113,17 +113,30 @@ class SAT {
         int get_size(){return s.size();}
         void display();
         string pretty();
-        int choose_random_key();
+        int choose_random_key(){
+            vector<int> v;
+            v.reserve(unassigned_keys.size());
+            for (const int& key : unassigned_keys) {
+                v.push_back(key);
+            }
+            int i = getInt(0, v.size());
+            int val = v.at(i);
+            v.clear();
+            return val;
+        }
         bool check_sat();
         bool set_assignment(int idx, bool b){
             if (d.count(idx)){
                 d[idx] = make_pair(true, b);
+                return true;
             } else {
-
+                return false;
             }
         }
-        void stack_push(int idx, bool value, bool decision){
-            s.emplace(idx, value, nbunassigned, decision);
+        bool stack_push(int idx, bool value, bool decision){
+            tuple t = make_tuple(idx, value, nbunassigned, decision);
+            s.push(t);
+            return true;
         }
         tuple<int, bool, int, bool> stack_pop(){
             if (!s.empty()){
