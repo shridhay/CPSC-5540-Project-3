@@ -18,16 +18,16 @@ using namespace std;
 
 class SAT {
     private:
-    int nbvars;
-    int nbclauses;
-    int nbunassigned;
-    vector<vector<int> > clauses;
-    stack<tuple<int, bool, int, bool> > s;
-    int stack_size = 0;
-    unordered_map<int, pair<bool, bool> > d;
-    mt19937 mt_rand;
-    set<int> unassigned_keys;
-    
+        int nbvars;
+        int nbclauses;
+        int nbunassigned;
+        vector<vector<int> > clauses;
+        stack<tuple<int, bool, int, bool> > s;
+        int stack_size = 0;
+        unordered_map<int, pair<bool, bool> > d;
+        mt19937 mt_rand;
+        set<int> unassigned_keys;
+        
     public:
         SAT(){
             mt_rand.seed(time(NULL));
@@ -70,7 +70,7 @@ class SAT {
         bool parse_idx(int idx){
             if (d.count(abs(idx))){
                 if (idx > 0){
-                    pair t = d[idx];
+                    pair<bool, bool> t = d[idx];
                     if (t.first){
                         return t.second;
                     } else {
@@ -105,8 +105,17 @@ class SAT {
             }
         }
         void print_nbunassigned(){cout << to_string(nbunassigned) << endl;}
-        // vector<vector<int> > get_clauses();
-        // set<int> get_unassigned_keys();
+        vector<vector<int> > get_clauses(){
+            vector<vector<int> > v = clauses;
+            return v;
+        }
+        set<int> get_unassigned_keys(){
+            set<int> t;
+            for (const int& key : unassigned_keys) {
+                t.insert(key);
+            }
+            return t;
+        }
         int get_nbunassigned(){return nbunassigned;}
         int get_nbclauses(){return nbclauses;}
         int get_nbvars(){return nbvars;}
@@ -149,7 +158,15 @@ class SAT {
         // void stack_print();
         void print_assignment();
         // unordered_map<int, pair<bool, bool> > get_assignment();
-        bool solve();
+        bool solve(){
+            bool sol = dpll();
+            if (sol){
+                print_assignment();
+            } else {
+                cout << "UNSAT" << endl;
+            }
+            return sol;
+        }
         void backtrack(int n){
             while (get_size() > n){
                 tuple t = stack_pop();
@@ -159,9 +176,29 @@ class SAT {
                 nbunassigned++;
             }
         }
-        bool dpll();
-        bool pure_literal_elimination();
         bool unit_propagation();
+        bool dpll(){
+            if (!unit_propagation()) return false;
+            update();
+            pure_literal_elimination();
+            update();
+            if (all_assigned()) return check_sat();
+            int idx = choose_random_key();
+            int size = get_size();
+            stack_push(idx, true, true);
+            set_assignment(idx, true);
+            update();
+            if (dpll()) return true;
+            backtrack(size);
+            stack_push(idx, false, false);
+            set_assignment(idx, false);
+            update();
+            if (dpll()) return true;
+            backtrack(size);
+            return false;
+        }
+        bool pure_literal_elimination();
+        
 };
 
 int main(int argc, char *argv[]){
