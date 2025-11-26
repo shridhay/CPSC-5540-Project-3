@@ -1,4 +1,3 @@
-from __future__ import annotations
 import sys
 import copy
 import random
@@ -7,22 +6,22 @@ class SAT:
     def __init__(self, numOfVars, numOfClauses):
         self.nbvars = numOfVars
         self.nbclauses = numOfClauses
-        self.clauses = []
         self.nbunassigned = numOfVars
-        self.d = {i: None for i in range(1, self.nbvars + 1)}
-        self.unassignedKeys = set(self.d.keys())
+        self.clauses = []
         self.stack = []
+        self.d = {i: None for i in range(1, self.nbvars + 1)}
+        self.unassigned_keys = set(self.d.keys())
         self.stack_size = len(self.stack)
         self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
 
     def cold_restart(self):
         self.d = {i: None for i in range(1, self.nbvars + 1)}
-        self.unassignedKeys = set(self.d.keys())
-        self.nbunassigned = len(self.unassignedKeys)
+        self.unassigned_keys = set(self.d.keys())
+        self.nbunassigned = len(self.unassigned_keys)
 
     def update(self):
-        self.unassignedKeys = {key for key in self.d.keys() if self.d[key] is None}
-        self.nbunassigned = len(self.unassignedKeys)
+        self.unassigned_keys = {key for key in self.d.keys() if self.d[key] is None}
+        self.nbunassigned = len(self.unassigned_keys)
     
     def parse_line(self, line):
         self.clauses.append(list(map(int, line.split()))[:-1])
@@ -32,16 +31,6 @@ class SAT:
 
     def decrement(self):
         self.nbunassigned -= 1
-
-    # def parse_idx(self, idx):
-    #     if idx > 0:
-    #         return self.d[idx] if idx in self.d.keys() else None
-    #     elif idx < 0:
-    #         return not(self.d[-idx]) if -idx in self.d.keys() else None
-    #     elif idx == 0:
-    #         return None
-    #     else:
-    #         return None
 
     def parse_idx(self, idx):
         val = self.d.get(abs(idx), None)
@@ -67,7 +56,7 @@ class SAT:
 
     def print_unassignedKeys(self):
         # self.update()
-        print(self.unassignedKeys)
+        print(self.unassigned_keys)
 
     def print_nbunassigned(self):
         # self.update()
@@ -77,7 +66,7 @@ class SAT:
         return copy.deepcopy(self.clauses)
         
     def get_unassignedKeys(self):
-        return copy.deepcopy(self.unassignedKeys)
+        return copy.deepcopy(self.unassigned_keys)
 
     def get_nbunassigned(self):
         return self.nbunassigned
@@ -88,7 +77,7 @@ class SAT:
     def display(self):
         print(self.pretty())
 
-    def pretty(self) -> str:
+    def pretty(self):
         clause_strs = []
         for clause in self.clauses:
             literals = []
@@ -100,11 +89,8 @@ class SAT:
             clause_strs.append("(" + " ∨ ".join(literals) + ")")
         return " ∧ ".join(clause_strs)
 
-    # def choose_random_literal(self):
-    #     self.update()
-    #     if self.nbunassigned == 0:
-    #         return None
-    #     return random.choice(self.unassignedKeys)
+    def choose_random_key(self):
+        return random.choice(list(self.unassigned_keys))
             
     # def choose_random_assignment(self):
     #     assign_dict = copy.deepcopy(self.d)
@@ -166,30 +152,30 @@ class SAT:
         while len(self.stack) > n:
             idx, _, _, _= self.stack_pop()
             self.d[idx] = None
-            self.unassignedKeys.add(idx)
+            self.unassigned_keys.add(idx)
             self.nbunassigned += 1
         # self.update()
 
     def dpll(self):
         if not(self.unit_propagation()):
             return False
+        self.update()
         self.pure_literal_elimination()
-        # self.update()
+        self.update()
         if self.all_assigned():
             return self.check_sat()
-        idx = random.choice(list(self.unassignedKeys))
+        # idx = random.choice(list(self.unassigned_keys))
+        idx = self.choose_random_key()
         size = self.get_size()
         self.stack_push(idx, True, True)
         self.set_assignment(idx, True)
         self.update()
-        # self.nbunassigned -= 1
         if self.dpll():
             return True
         self.backtrack(size)
         self.stack_push(idx, False, True)
         self.set_assignment(idx, False)
         self.update()
-        # self.nbunassigned -= 1
         if self.dpll():
             return True
         self.backtrack(size)
@@ -206,14 +192,11 @@ class SAT:
                         negative.add(-literal)
         for idx in range(1, self.nbvars + 1):
             if self.d[idx] is None:
-                if (idx in positive) ^ (idx in negative):
-                    self.get_assignment(idx, (idx in positive))
+                if (idx in positive) and not(idx in negative):
+                    self.set_assignment(idx, True)
+                elif (idx in negative) and not(idx in positive):
+                    self.set_assignment(idx, False)
         return True
-                # if (idx in positive) and not(idx in negative):
-                #     self.set_assignment(idx, True)
-                # elif (idx in negative) and not(idx in positive):
-                #     self.set_assignment(idx, False)
-        # return True
 
     def unit_propagation(self):
         modified = True
@@ -244,11 +227,9 @@ if __name__ == "__main__":
                     if not(line) or (line[0] in {'c', '%', '0'}):
                         continue
                     elif line[0] == 'p':
-                        # print(line)
                         lst = line.split()
                         solver = SAT(int(lst[2]), int(lst[3]))
                     else:
-                        # print(line)
                         solver.parse_line(line)
             solver.display()
             solver.solve()
