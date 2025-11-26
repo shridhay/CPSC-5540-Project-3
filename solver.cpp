@@ -39,7 +39,12 @@ class SAT {
             for(int i = 1; i < nbvars + 1; i++){
                 unassigned_keys.insert(i);
             }
+            for(int i = 1; i < nbvars + 1; i++){
+                d.insert({i, make_pair(false, false)});
+            }
         }
+        int getInt(int min, int max){return ((mt_rand() % max) + min);}
+        void reseed(){mt_rand.seed(time(NULL));}
         void parse_line(string line){
             vector<int> clause;
             int n;
@@ -53,20 +58,36 @@ class SAT {
             }
             clauses.push_back(clause);
         }
-        void update();
+        void update(){
+            unassigned_keys.clear();
+            for (const auto& p : d) {
+                unassigned_keys.insert(p.first);
+            }
+            nbunassigned = unassigned_keys.size();
+        }
         void increment(){nbunassigned++;}
         void decrement(){nbunassigned--;}
-        // bool parse_idx(int idx){
-        //     if (d.count(abs(idx))){
-        //         if (idx > 0){
-        //             return d[idx];
-        //         } else if (idx < 0){
-        //             return !(d[-1 * idx]);
-        //         }
-        //     } else {
-        //         return NULL;
-        //     }
-        // }
+        bool parse_idx(int idx){
+            if (d.count(abs(idx))){
+                if (idx > 0){
+                    pair t = d[idx];
+                    if (t.first){
+                        return t.second;
+                    } else {
+                        // return NULL;
+                    }
+                } else if (idx < 0){
+                    pair t = d[idx];
+                    if (t.first){
+                        return !(t.second);
+                    } else {
+                        // return NULL;
+                    }
+                }
+            } else {
+                // return NULL;
+            }
+        }
         bool all_assigned(){return nbunassigned == 0;}
         void print_clauses(){
             for (const auto& clause : clauses) {
@@ -78,33 +99,56 @@ class SAT {
         }
         void print_nbvars(){cout << to_string(nbvars) << endl;}
         void print_nbclauses(){cout << to_string(nbclauses) << endl;}
-        void print_unassigned_keys();
+        void print_unassigned_keys(){
+            for (const int& key : unassigned_keys) {
+                cout << key << endl;
+            }
+        }
         void print_nbunassigned(){cout << to_string(nbunassigned) << endl;}
-        vector<vector<int> > get_clauses();
-        vector<int> get_unassigned_keys();
-        int get_nbunassigned();
+        // vector<vector<int> > get_clauses();
+        // set<int> get_unassigned_keys();
+        int get_nbunassigned(){return nbunassigned;}
+        int get_nbclauses(){return nbclauses;}
+        int get_nbvars(){return nbvars;}
         int get_size(){return s.size();}
         void display();
         string pretty();
         int choose_random_key();
         bool check_sat();
-        bool set_assignment(int idx, bool b);
+        bool set_assignment(int idx, bool b){
+            if (d.count(idx)){
+                d[idx] = make_pair(true, b);
+            } else {
+
+            }
+        }
         void stack_push(int idx, bool value, bool decision){
             s.emplace(idx, value, nbunassigned, decision);
         }
-        tuple<int, bool, int, bool> stack_pop();
+        tuple<int, bool, int, bool> stack_pop(){
+            if (!s.empty()){
+                tuple t = s.top();
+                s.pop();
+                return t;
+            }
+        }
         bool stack_empty(){return s.empty();}
-        void stack_print();
+        // void stack_print();
         void print_assignment();
-        unordered_map<int, bool> get_assignment();
+        // unordered_map<int, pair<bool, bool> > get_assignment();
         bool solve();
-        void backtrack(int n);
+        void backtrack(int n){
+            while (get_size() > n){
+                tuple t = stack_pop();
+                int idx = get<0>(t);
+                d[idx] = make_pair(false, false);
+                unassigned_keys.insert(idx);
+                nbunassigned++;
+            }
+        }
         bool dpll();
         bool pure_literal_elimination();
         bool unit_propagation();
-        int getInt(int min, int max){return ((mt_rand() % max) + min);}
-        void reseed(){mt_rand.seed(time(NULL));}
-
 };
 
 int main(int argc, char *argv[]){
@@ -117,6 +161,7 @@ int main(int argc, char *argv[]){
     SAT solver;
     if (!inputFile.is_open()){
         cout << "Cannot open file: " << filename << endl;
+        return 1;
     }
     string currentLine, tok;
     while(getline(inputFile, currentLine)){
