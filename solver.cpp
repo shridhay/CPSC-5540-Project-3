@@ -20,7 +20,7 @@ class SAT {
     int nbclauses;
     int nbunassigned;
     vector<vector<int> > clauses;
-    stack<tuple<int, bool, int, bool> > unassigned_keys;
+    stack<tuple<int, bool, int, bool> > s;
     int stack_size = 0;
     unordered_map<int, pair<bool, bool> > d;
     
@@ -30,14 +30,27 @@ class SAT {
             nbvars = numOfVars;
             nbunassigned = numOfVars;
             nbclauses = numOfClauses;
+
+        }
+        void parse_line(string line){
+            vector<int> clause;
+            int n;
+            stringstream ss(line);
+            while (ss >> n){
+                if (n == 0){
+                    break;
+                } else {
+                    clause.push_back(n);
+                }
+            }
+            clauses.push_back(clause);
         }
         void cold_restart();
         void update();
-        void parse_line(string line);
         void increment(){nbunassigned++;}
         void decrement(){nbunassigned--;}
         bool parse_idx(int idx);
-        bool all_assigned();
+        bool all_assigned(){return nbunassigned == 0;}
         void print_clauses();
         void print_nbvars();
         void print_nbclauses();
@@ -68,6 +81,7 @@ class SAT {
 int main(int argc, char *argv[]){
     if (argc != 2){
         cout << "Usage: " << endl;
+        return 1;
     }
     string filename = argv[1];
     ifstream inputFile(filename);
