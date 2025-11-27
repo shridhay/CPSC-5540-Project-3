@@ -14,6 +14,9 @@ class SAT:
         self.stack_size = len(self.stack)
         self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
 
+    def parse_line(self, line):
+        self.clauses.append(list(map(int, line.split()))[:-1])
+
     def cold_restart(self):
         self.d = {i: None for i in range(1, self.nbvars + 1)}
         self.unassigned_keys = set(self.d.keys())
@@ -54,7 +57,7 @@ class SAT:
     def print_nbclauses(self):
         print(self.nbclauses)
 
-    def print_unassignedKeys(self):
+    def print_unassigned_keys(self):
         # self.update()
         print(self.unassigned_keys)
 
@@ -65,7 +68,7 @@ class SAT:
     def get_clauses(self):
         return copy.deepcopy(self.clauses)
         
-    def get_unassignedKeys(self):
+    def get_unassigned_keys(self):
         return copy.deepcopy(self.unassigned_keys)
 
     def get_nbunassigned(self):
@@ -227,8 +230,8 @@ if __name__ == "__main__":
                     if not(line) or (line[0] in {'c', '%', '0'}):
                         continue
                     elif line[0] == 'p':
-                        lst = line.split()
-                        solver = SAT(int(lst[2]), int(lst[3]))
+                        args = line.split()
+                        solver = SAT(int(args[2]), int(args[3]))
                     else:
                         solver.parse_line(line)
             solver.display()
