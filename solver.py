@@ -2,14 +2,17 @@ import sys
 import copy
 import random
 
+Clause = list[int]
+LiteralIdx = int
+
 class SAT:
     def __init__(self, numOfVars, numOfClauses):
         self.nbvars = numOfVars
         self.nbclauses = numOfClauses
         self.nbunassigned = numOfVars
-        self.clauses = []
-        self.stack = []
-        self.d = {i: None for i in range(1, self.nbvars + 1)}
+        self.clauses: list[Clause] = []
+        self.stack: list[tuple[LiteralIdx, bool, int, bool]] = []
+        self.d: dict[LiteralIdx, bool | None] = {i: None for i in range(1, self.nbvars + 1)}
         self.unassigned_keys = set(self.d.keys())
         self.stack_size = len(self.stack)
         self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
