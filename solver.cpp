@@ -122,7 +122,36 @@ class SAT {
         int get_nbvars(){return nbvars;}
         int get_size(){return s.size();}
         void display(){cout << pretty() << endl;}
-        string pretty();
+        string pretty(){
+            vector<string> clause_strs;
+            for (const auto& clause : clauses) {
+                vector<string> literals;
+                for (const auto& literal : clause) {
+                    if (literal < 0){
+                        literals.push_back("~x" + to_string(-literal));
+                    } else {
+                        literals.push_back("x" + to_string(literal));
+                    }
+                }
+                string clause_str = "(";
+                for (int i = 0; i < literals.size(); i++){
+                    clause_str += literals[i];
+                    if (i < literals.size() - 1){
+                        clause_str += " ∨ ";
+                    }
+                }
+                clause_str += ")";
+                clause_strs.push_back(clause_str);
+            }
+            string result = "";
+            for (int i = 0; i < clause_strs.size(); i++){
+                result += clause_strs[i];
+                if (i < clause_strs.size() - 1){
+                    result += " ∧ ";
+                }
+            }
+            return result;
+        }
         int choose_random_key(){
             vector<int> v;
             v.reserve(unassigned_keys.size());
@@ -319,6 +348,7 @@ int main(int argc, char *argv[]){
         }
     }
     inputFile.close();
+    solver.display();
     solver.solve();
     return 0;
 }
