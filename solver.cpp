@@ -20,9 +20,9 @@ class SAT {
         int nbunassigned;
         vector<vector<int> > clauses;
         stack<int> s;
-        unordered_map<int, tribool> umap;
-        mt19937 mt_rand;
+        vector<tribool> umap;
         vector<bool> unassigned_keys;
+        mt19937 mt_rand;
         
     public:
         SAT(){mt_rand.seed(time(NULL));}
@@ -30,9 +30,7 @@ class SAT {
             nbvars = numOfVars;
             nbunassigned = numOfVars;
             unassigned_keys.assign(nbvars + 1, true);
-            for(int i = 1; i < nbvars + 1; i++){
-                umap.insert({i, tribool::None});
-            }
+            umap.assign(nbvars + 1, tribool::None);
         }
         int getInt(int max){return (mt_rand() % max);}
         void reseed(){mt_rand.seed(time(NULL));}
@@ -50,7 +48,7 @@ class SAT {
             clauses.push_back(clause);
         }
         tribool parse_idx(int idx){
-            if (umap.count(abs(idx))){
+            if (umap.at(abs(idx)) != tribool::None){
                 tribool val = umap[abs(idx)];
                 if (idx > 0){
                     return val;
@@ -70,55 +68,14 @@ class SAT {
             }
         }
         bool all_assigned(){return nbunassigned == 0;}
-        // void display(){cout << pretty() << endl;}
-        // string pretty(){
-        //     vector<string> clause_strs;
-        //     for (const auto& clause : clauses) {
-        //         vector<string> literals;
-        //         for (const auto& literal : clause) {
-        //             if (literal < 0){
-        //                 literals.push_back("~x" + to_string(-literal));
-        //             } else {
-        //                 literals.push_back("x" + to_string(literal));
-        //             }
-        //         }
-        //         string clause_str = "(";
-        //         for (int i = 0; i < literals.size(); i++){
-        //             clause_str += literals[i];
-        //             if (i < literals.size() - 1){
-        //                 clause_str += " ∨ ";
-        //             }
-        //         }
-        //         clause_str += ")";
-        //         clause_strs.push_back(clause_str);
-        //     }
-        //     string result = "";
-        //     for (int i = 0; i < clause_strs.size(); i++){
-        //         result += clause_strs[i];
-        //         if (i < clause_strs.size() - 1){
-        //             result += " ∧ ";
-        //         }
-        //     }
-        //     return result;
-        // }
         int choose_random_key(){
+            if (all_assigned()) return -1;
             vector<int> v;
             v.reserve(nbunassigned);
             for (int i = 1; i < nbvars + 1; i++){
                 if (unassigned_keys.at(i)) v.push_back(i);
             }
             return v.at(getInt(v.size()));
-            // int v = getInt(nbunassigned);
-            // for (int i = 1; i < nbvars + 1; i++){
-            //     if (unassigned_keys[i]){
-            //         if (v == 0){
-            //             return i;
-            //         } else {
-            //             v--;
-            //         }
-            //     }
-            // }
-            // return -1;
         }
         bool check_sat(){
             for (int i = 0; i < clauses.size(); i++){
@@ -189,7 +146,7 @@ class SAT {
                 for (const auto& clause : clauses) {
                     bool satisfied = false;
                     int unassigned_count = 0;
-                    int last_unassigned_lit = 0;
+                    int last_unassigned_literal = 0;
                     for (int literal : clause) {
                         tribool val = parse_idx(literal);
                         if (val == tribool::True) {
@@ -198,7 +155,7 @@ class SAT {
                         }
                         else if (val == tribool::None) {
                             unassigned_count++;
-                            last_unassigned_lit = literal;
+                            last_unassigned_literal = literal;
                         }
                     }
                     if (!satisfied && unassigned_count == 0) {
@@ -206,13 +163,13 @@ class SAT {
                     }
                     if (!satisfied && unassigned_count == 1) {
                         tribool assignment = tribool::None;
-                        if (last_unassigned_lit > 0){
+                        if (last_unassigned_literal > 0){
                             assignment = tribool::True;
                         } else {
                             assignment = tribool::False;
                         }
-                        stack_push(abs(last_unassigned_lit));
-                        set_assignment(abs(last_unassigned_lit), assignment);
+                        stack_push(abs(last_unassigned_literal));
+                        set_assignment(abs(last_unassigned_literal), assignment);
                         modified = true;
                     }
                 }
@@ -236,8 +193,10 @@ class SAT {
             for(int idx = 1; idx < nbvars + 1; idx++){
                 if (umap[idx] == tribool::None){
                     if (positive.count(idx) && !negative.count(idx)){
+                        // stack_push(idx);
                         set_assignment(idx, tribool::True);
                     } else if (negative.count(idx) && !positive.count(idx)){
+                        // stack_push(idx);
                         set_assignment(idx, tribool::False);
                     }
                 }
