@@ -70,8 +70,8 @@ class SAT {
             }
             nbunassigned = unassigned_keys.size();
         }
-        void increment(){nbunassigned++;}
-        void decrement(){nbunassigned--;}
+        // void increment(){nbunassigned++;}
+        // void decrement(){nbunassigned--;}
         tribool parse_idx(int idx){
             if (d.count(abs(idx))){
                 tribool val = d[abs(idx)];
@@ -93,36 +93,36 @@ class SAT {
             }
         }
         bool all_assigned(){return nbunassigned == 0;}
-        void print_clauses(){
-            for (const auto& clause : clauses) {
-                for (const auto& literal : clause) {
-                    cout << literal << " ";
-                }
-                cout << endl; 
-            }
-        }
-        void print_nbvars(){cout << to_string(nbvars) << endl;}
-        void print_nbclauses(){cout << to_string(nbclauses) << endl;}
-        void print_unassigned_keys(){
-            for (const int& key : unassigned_keys) {
-                cout << key << endl;
-            }
-        }
-        void print_nbunassigned(){cout << to_string(nbunassigned) << endl;}
-        vector<vector<int> > get_clauses(){
-            vector<vector<int> > v = clauses;
-            return v;
-        }
-        set<int> get_unassigned_keys(){
-            set<int> t;
-            for (const int& key : unassigned_keys) {
-                t.insert(key);
-            }
-            return t;
-        }
-        int get_nbunassigned(){return nbunassigned;}
-        int get_nbclauses(){return nbclauses;}
-        int get_nbvars(){return nbvars;}
+        // void print_clauses(){
+        //     for (const auto& clause : clauses) {
+        //         for (const auto& literal : clause) {
+        //             cout << literal << " ";
+        //         }
+        //         cout << endl; 
+        //     }
+        // }
+        // void print_nbvars(){cout << to_string(nbvars) << endl;}
+        // void print_nbclauses(){cout << to_string(nbclauses) << endl;}
+        // void print_unassigned_keys(){
+        //     for (const int& key : unassigned_keys) {
+        //         cout << key << endl;
+        //     }
+        // }
+        // void print_nbunassigned(){cout << to_string(nbunassigned) << endl;}
+        // vector<vector<int> > get_clauses(){
+        //     vector<vector<int> > v = clauses;
+        //     return v;
+        // }
+        // set<int> get_unassigned_keys(){
+        //     set<int> t;
+        //     for (const int& key : unassigned_keys) {
+        //         t.insert(key);
+        //     }
+        //     return t;
+        // }
+        // int get_nbunassigned(){return nbunassigned;}
+        // int get_nbclauses(){return nbclauses;}
+        // int get_nbvars(){return nbvars;}
         int get_size(){return s.size();}
         void display(){cout << pretty() << endl;}
         string pretty(){
@@ -191,13 +191,6 @@ class SAT {
             } else{
                 unassigned_keys.erase(idx);
             }
-            // if (d.count(idx)){
-            //     d[idx] = b;
-            //     update();
-            //     return true;
-            // } else {
-            //     return false;
-            // }
         }
         bool stack_push(int idx, bool value, bool decision){
             tuple<int, bool, int, bool> t = make_tuple(idx, value, nbunassigned, decision);
@@ -225,10 +218,10 @@ class SAT {
                 }
             }
         }
-        unordered_map<int, tribool> get_assignment(){
-            unordered_map<int, tribool> m = d;
-            return m;
-        }
+        // unordered_map<int, tribool> get_assignment(){
+        //     unordered_map<int, tribool> m = d;
+        //     return m;
+        // }
         bool solve(){
             bool sol = dpll();
             if (sol){
@@ -244,8 +237,8 @@ class SAT {
                 int idx = get<0>(t);
                 d[idx] = tribool::None;
                 unassigned_keys.insert(idx);
+                nbunassigned++;
             }
-            update();
         }
         bool unit_propagation() {
             bool modified = true;
