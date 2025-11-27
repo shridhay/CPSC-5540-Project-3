@@ -121,7 +121,7 @@ class SAT {
         int get_nbclauses(){return nbclauses;}
         int get_nbvars(){return nbvars;}
         int get_size(){return s.size();}
-        void display();
+        void display(){cout << pretty() << endl;}
         string pretty();
         int choose_random_key(){
             vector<int> v;
@@ -175,17 +175,15 @@ class SAT {
             return make_tuple(0, false, 0, false);
         }
         bool stack_empty(){return s.empty();}
-        // void stack_print();
         void print_assignment(){
-            for (const pair<int, tribool>& tup : d){
-                int key = tup.first;
-                tribool value = tup.second;
+            for(int i = 1; i < nbvars + 1; i++){
+                tribool value = d[i];
                 if (value == tribool::True){
-                    cout << "Key: " << key << ", Value: True"  << endl;
+                    cout << "Key: " << i << ", Value: True"  << endl;
                 } else if (value == tribool::False){
-                    cout << "Key: " << key << ", Value: False"  << endl;
+                    cout << "Key: " << i << ", Value: False"  << endl;
                 } else {
-                    cout << "Key: " << key << ", Value: None"  << endl;
+                    cout << "Key: " << i << ", Value: None"  << endl;
                 }
             }
         }
@@ -324,3 +322,4 @@ int main(int argc, char *argv[]){
     solver.solve();
     return 0;
 }
+
