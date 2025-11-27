@@ -14,9 +14,6 @@ class SAT:
         self.stack_size = len(self.stack)
         self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
 
-    def parse_line(self, line):
-        self.clauses.append(list(map(int, line.split()))[:-1])
-
     def cold_restart(self):
         self.d = {i: None for i in range(1, self.nbvars + 1)}
         self.unassigned_keys = set(self.d.keys())
@@ -127,7 +124,7 @@ class SAT:
         if not(self.stack_empty()):
             return self.stack.pop()
         else:
-            return None
+            raise IndexError("Cannot pop empty stack")
 
     def stack_empty(self):
         return len(self.stack) == 0
@@ -224,6 +221,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         path = str(sys.argv[1])        
         try:
+            solver = None
             with open(path, 'r') as f:
                 for line in f:
                     line = line.strip()
@@ -233,9 +231,11 @@ if __name__ == "__main__":
                         args = line.split()
                         solver = SAT(int(args[2]), int(args[3]))
                     else:
+                        assert solver is not None, "Reading valid line before 'p' line read"
                         solver.parse_line(line)
-            solver.display()
-            solver.solve()
+            if solver is not None:
+                solver.display()
+                solver.solve()
         except FileNotFoundError:
             print(f"Error: File '{path}' not found.")
     else:
