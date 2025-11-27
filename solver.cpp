@@ -16,6 +16,8 @@
 
 using namespace std;
 
+enum class tribool {True, False, None};
+
 class SAT {
     private:
         int nbvars;
@@ -24,7 +26,7 @@ class SAT {
         vector<vector<int> > clauses;
         stack<tuple<int, bool, int, bool> > s;
         int stack_size = 0;
-        unordered_map<int, pair<bool, bool> > d;
+        unordered_map<int, tribool> d;
         mt19937 mt_rand;
         set<int> unassigned_keys;
         
@@ -38,7 +40,7 @@ class SAT {
                 unassigned_keys.insert(i);
             }
             for(int i = 1; i < nbvars + 1; i++){
-                d.insert({i, make_pair(false, false)});
+                d.insert({i, tribool::None});
             }
         }
         int getInt(int min, int max){return ((mt_rand() % max) + min);}
@@ -65,37 +67,29 @@ class SAT {
         }
         void increment(){nbunassigned++;}
         void decrement(){nbunassigned--;}
-        pair<bool, bool> parse_idx(int idx){
+        tribool parse_idx(int idx){
             if (d.count(abs(idx))){
+                tribool val = d[idx];
                 if (idx > 0){
-                    pair<bool, bool> t = d[idx];
-                    if (t.first){
-                        pair<bool, bool> p = make_pair(true, t.second);
-                        return p;
-                    } else {
-                        pair<bool, bool> p = make_pair(false, false);
-                        return p;
-                    }
+                    return val;
                 } else if (idx < 0){
-                    pair t = d[idx];
-                    if (t.first){
-                        pair<bool, bool> p = make_pair(true, !t.second);
-                        return p;
+                    if (val == tribool::True){
+                        return tribool::False;
                     } else {
-                        pair<bool, bool> p = make_pair(false, false);
-                        return p;
+                        return tribool::True;
                     }
+                } else {
+                    return tribool::None;
                 }
             } else {
-                pair<bool, bool> p = make_pair(false, false);
-                return p;
+                return tribool::None;
             }
         }
         bool all_assigned(){return nbunassigned == 0;}
         void print_clauses(){
             for (const auto& clause : clauses) {
-                for (const auto& elem : clause) {
-                    cout << elem << " ";
+                for (const auto& literal : clause) {
+                    cout << literal << " ";
                 }
                 cout << endl; 
             }
@@ -136,10 +130,18 @@ class SAT {
             v.clear();
             return val;
         }
-        bool check_sat();
-        bool set_assignment(int idx, bool b){
+        bool check_sat(){
+            // for (int i = 0; i < clauses.size(); i++){
+            //     vector<int> clause = clauses.at(i);
+            //     for (int j = 0; j < clause.size(); j++){
+            //         int literal = clause.at(j);
+
+            //     }
+            // }
+        }
+        bool set_assignment(int idx, tribool b){
             if (d.count(idx)){
-                d[idx] = make_pair(true, b);
+                d[idx] = b;
                 update();
                 return true;
             } else {
@@ -160,8 +162,20 @@ class SAT {
         }
         bool stack_empty(){return s.empty();}
         // void stack_print();
-        void print_assignment();
-        // unordered_map<int, pair<bool, bool> > get_assignment();
+        void print_assignment(){
+            for (const pair<int, tribool>& tup : d){
+                int key = tup.first;
+                tribool value = tup.second;
+                if (value == tribool::True){
+                    cout << "Key: " << key << ", Value: True"  << endl;
+                } else if (value == tribool::False){
+                    cout << "Key: " << key << ", Value: False"  << endl;
+                } else {
+                    cout << "Key: " << key << ", Value: None"  << endl;
+                }
+            }
+        }
+        unordered_map<int, tribool> get_assignment();
         bool solve(){
             bool sol = dpll();
             if (sol){
@@ -175,13 +189,37 @@ class SAT {
             while (get_size() > n){
                 tuple t = stack_pop();
                 int idx = get<0>(t);
-                d[idx] = make_pair(false, false);
+                d[idx] = tribool::None;
                 unassigned_keys.insert(idx);
                 nbunassigned++;
             }
         }
         bool unit_propagation();
-        bool pure_literal_elimination(){}
+        bool pure_literal_elimination(){
+            set<int> positive;
+            set<int> negative;
+            for (const auto& clause : clauses) {
+                for (const auto& literal : clause) {
+                    if (parse_idx(literal) == tribool::None){
+                        if (literal > 0){
+                            positive.insert(literal);
+                        } else {
+                            negative.insert(-1 * literal);
+                        }
+                    }
+                }
+            }
+            for(int idx = 1; idx < nbvars + 1; idx++){
+                if (d[idx] == tribool::None){
+                    if (positive.count(idx) && !negative.count(idx)){
+                        set_assignment(idx, tribool::True);
+                    } else if (negative.count(idx) && !positive.count(idx)){
+                        set_assignment(idx, tribool::False);
+                    }
+                }
+            }
+            return true;
+        }
         bool dpll(){
             if (!unit_propagation()) return false;
             update();
@@ -190,13 +228,13 @@ class SAT {
             if (all_assigned()) return check_sat();
             int idx = choose_random_key();
             int size = get_size();
-            stack_push(idx, true, true);
-            set_assignment(idx, true);
+            stack_push(idx, true, true); 
+            set_assignment(idx, tribool::True);
             update();
             if (dpll()) return true;
             backtrack(size);
             stack_push(idx, false, false);
-            set_assignment(idx, false);
+            set_assignment(idx, tribool::False);
             update();
             if (dpll()) return true;
             backtrack(size);
