@@ -43,7 +43,10 @@ class SAT {
                 d.insert({i, tribool::None});
             }
         }
-        int getInt(int min, int max){return ((mt_rand() % max) + min);}
+        int getInt(int min, int max){
+            std::uniform_int_distribution<int> dist(min, max - 1);
+            return dist(mt_rand);
+        }
         void reseed(){mt_rand.seed(time(NULL));}
         void parse_line(string line){
             vector<int> clause;
@@ -181,14 +184,20 @@ class SAT {
             }
             return true;
         }
-        bool set_assignment(int idx, tribool b){
-            if (d.count(idx)){
-                d[idx] = b;
-                update();
-                return true;
-            } else {
-                return false;
+        void set_assignment(int idx, tribool b){
+            d[idx] = b;
+            if (b == tribool::None){
+                unassigned_keys.insert(idx);
+            } else{
+                unassigned_keys.erase(idx);
             }
+            // if (d.count(idx)){
+            //     d[idx] = b;
+            //     update();
+            //     return true;
+            // } else {
+            //     return false;
+            // }
         }
         bool stack_push(int idx, bool value, bool decision){
             tuple<int, bool, int, bool> t = make_tuple(idx, value, nbunassigned, decision);
@@ -235,44 +244,43 @@ class SAT {
                 int idx = get<0>(t);
                 d[idx] = tribool::None;
                 unassigned_keys.insert(idx);
-                nbunassigned++;
             }
+            update();
         }
-        bool unit_propagation(){
+        bool unit_propagation() {
             bool modified = true;
-            while (modified){
+            while (modified) {
                 modified = false;
                 for (const auto& clause : clauses) {
-                    int unassigned_count = 0;
-                    int unassigned_literal = 0;
                     bool satisfied = false;
-                    for (const auto& literal : clause) {
-                        tribool val = parse_idx(literal);
-                        if (val == tribool::True){
+                    int unassigned_count = 0;
+                    int last_unassigned_lit = 0;
+                    for (int lit : clause) {
+                        tribool val = parse_idx(lit);
+                        if (val == tribool::True) {
                             satisfied = true;
-                            break;
-                        } else if (val == tribool::None){
+                            break;               
+                        }
+                        else if (val == tribool::None) {
                             unassigned_count++;
-                            unassigned_literal = literal;
+                            last_unassigned_lit = lit;
                         }
                     }
-                    if (!satisfied && unassigned_count == 0){
+                    if (!satisfied && unassigned_count == 0) {
                         return false;
                     }
-                    if (!satisfied && unassigned_count == 1){
-                        int idx = abs(unassigned_literal);
-                        tribool assignment = tribool::None;
-                        if (unassigned_literal > 0){
-                            assignment = tribool::True;
-                        } else {
-                            assignment = tribool::False;
-                        }
-                        set_assignment(idx, assignment);
+                    if (!satisfied && unassigned_count == 1) {
+                        int var = abs(last_unassigned_lit);
+                        tribool assign_val = (last_unassigned_lit > 0) 
+                                            ? tribool::True 
+                                            : tribool::False;
+                        stack_push(var, assign_val == tribool::True, false);
+                        set_assignment(var, assign_val);
                         modified = true;
                     }
                 }
             }
-            return true;
+            return true; 
         }
         bool pure_literal_elimination(){
             set<int> positive;
@@ -348,7 +356,6 @@ int main(int argc, char *argv[]){
         }
     }
     inputFile.close();
-    solver.display();
     solver.solve();
     return 0;
 }
