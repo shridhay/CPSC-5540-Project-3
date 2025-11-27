@@ -168,17 +168,17 @@ class SAT {
         }
         bool check_sat(){
             for (int i = 0; i < clauses.size(); i++){
-                vector<int> clause = clauses.at(i);
-                bool clause_satisfied = false;
+                const auto& clause = clauses[i];
+                bool satisfied = false;
                 for (int j = 0; j < clause.size(); j++){
                     int literal = clause.at(j);
                     tribool val = parse_idx(literal);
                     if (val == tribool::True){
-                        clause_satisfied = true;
+                        satisfied = true;
                         break;
                     }
                 }
-                if (!clause_satisfied){
+                if (!satisfied){
                     return false;
                 }
             }
