@@ -20,7 +20,7 @@ class SAT {
         int nbunassigned;
         vector<vector<int> > clauses;
         stack<int> s;
-        unordered_map<int, tribool> d;
+        unordered_map<int, tribool> umap;
         mt19937 mt_rand;
         vector<bool> unassigned_keys;
         
@@ -31,7 +31,7 @@ class SAT {
             nbunassigned = numOfVars;
             unassigned_keys.assign(nbvars + 1, true);
             for(int i = 1; i < nbvars + 1; i++){
-                d.insert({i, tribool::None});
+                umap.insert({i, tribool::None});
             }
         }
         int getInt(int max){return (mt_rand() % max);}
@@ -50,8 +50,8 @@ class SAT {
             clauses.push_back(clause);
         }
         tribool parse_idx(int idx){
-            if (d.count(abs(idx))){
-                tribool val = d[abs(idx)];
+            if (umap.count(abs(idx))){
+                tribool val = umap[abs(idx)];
                 if (idx > 0){
                     return val;
                 } else if (idx < 0){
@@ -108,6 +108,17 @@ class SAT {
                 if (unassigned_keys.at(i)) v.push_back(i);
             }
             return v.at(getInt(v.size()));
+            // int v = getInt(nbunassigned);
+            // for (int i = 1; i < nbvars + 1; i++){
+            //     if (unassigned_keys[i]){
+            //         if (v == 0){
+            //             return i;
+            //         } else {
+            //             v--;
+            //         }
+            //     }
+            // }
+            // return -1;
         }
         bool check_sat(){
             for (int i = 0; i < clauses.size(); i++){
@@ -119,17 +130,19 @@ class SAT {
                         break;
                     }
                 }
-                if (!satisfied){
-                    return false;
-                }
+                if (!satisfied) return false;
             }
             return true;
         }
         void set_assignment(int idx, tribool b){
-            if (d[idx] == tribool::None && b != tribool::None) nbunassigned--;
-            else if (d[idx] != tribool::None && b == tribool::None) nbunassigned++;
-            d[idx] = b;
-            unassigned_keys[idx] = (b == tribool::None);
+            if (umap[idx] == tribool::None && b != tribool::None) nbunassigned--;
+            else if (umap[idx] != tribool::None && b == tribool::None) nbunassigned++;
+            umap[idx] = b;
+            if (b == tribool::None){ 
+                unassigned_keys[idx] = true;
+            } else {
+                unassigned_keys[idx] = false;
+            }
         }
         bool stack_push(int idx){
             s.push(idx);
@@ -145,10 +158,9 @@ class SAT {
         }
         void print_assignment(){
             for(int i = 1; i < nbvars + 1; i++){
-                tribool value = d[i];
-                if (value == tribool::True){
+                if (umap[i] == tribool::True){
                     cout << "Key: " << i << ", Value: True"  << endl;
-                } else if (value == tribool::False){
+                } else if (umap[i] == tribool::False){
                     cout << "Key: " << i << ", Value: False"  << endl;
                 } else {
                     cout << "Key: " << i << ", Value: None"  << endl;
@@ -222,7 +234,7 @@ class SAT {
                 }
             }
             for(int idx = 1; idx < nbvars + 1; idx++){
-                if (d[idx] == tribool::None){
+                if (umap[idx] == tribool::None){
                     if (positive.count(idx) && !negative.count(idx)){
                         set_assignment(idx, tribool::True);
                     } else if (negative.count(idx) && !positive.count(idx)){
