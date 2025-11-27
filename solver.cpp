@@ -80,7 +80,7 @@ class SAT {
                     } else if (val == tribool::False){
                         return tribool::True;
                     } else {
-                        return tribool::True;
+                        return tribool::None;
                     }
                 } else {
                     return tribool::None;
@@ -162,16 +162,17 @@ class SAT {
             }
         }
         bool stack_push(int idx, bool value, bool decision){
-            tuple t = make_tuple(idx, value, nbunassigned, decision);
+            tuple<int, bool, int, bool> t = make_tuple(idx, value, nbunassigned, decision);
             s.push(t);
             return true;
         }
         tuple<int, bool, int, bool> stack_pop(){
             if (!s.empty()){
-                tuple t = s.top();
+                tuple<int, bool, int, bool> t = s.top();
                 s.pop();
                 return t;
             }
+            return make_tuple(0, false, 0, false);
         }
         bool stack_empty(){return s.empty();}
         // void stack_print();
@@ -203,14 +204,49 @@ class SAT {
         }
         void backtrack(int n){
             while (get_size() > n){
-                tuple t = stack_pop();
+                tuple<int, bool, int, bool> t = stack_pop();
                 int idx = get<0>(t);
                 d[idx] = tribool::None;
                 unassigned_keys.insert(idx);
                 nbunassigned++;
             }
         }
-        bool unit_propagation();
+        bool unit_propagation(){
+            bool modified = true;
+            while (modified){
+                modified = false;
+                for (const auto& clause : clauses) {
+                    int unassigned_count = 0;
+                    int unassigned_literal = 0;
+                    bool satisfied = false;
+                    for (const auto& literal : clause) {
+                        tribool val = parse_idx(literal);
+                        if (val == tribool::True){
+                            satisfied = true;
+                            break;
+                        } else if (val == tribool::None){
+                            unassigned_count++;
+                            unassigned_literal = literal;
+                        }
+                    }
+                    if (!satisfied && unassigned_count == 0){
+                        return false;
+                    }
+                    if (!satisfied && unassigned_count == 1){
+                        int idx = abs(unassigned_literal);
+                        tribool assignment = tribool::None;
+                        if (unassigned_literal > 0){
+                            assignment = tribool::True;
+                        } else {
+                            assignment = tribool::False;
+                        }
+                        set_assignment(idx, assignment);
+                        modified = true;
+                    }
+                }
+            }
+            return true;
+        }
         bool pure_literal_elimination(){
             set<int> positive;
             set<int> negative;
@@ -288,4 +324,3 @@ int main(int argc, char *argv[]){
     solver.solve();
     return 0;
 }
-
