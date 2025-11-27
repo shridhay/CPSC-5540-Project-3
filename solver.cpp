@@ -274,7 +274,7 @@ int main(int argc, char *argv[]){
         cout << "Cannot open file: " << filename << endl;
         return 1;
     }
-    string currentLine, tok;
+    string currentLine;
     while(getline(inputFile, currentLine)){
         if (currentLine.empty() || currentLine[0] == 'c' || currentLine[0] == '%' || currentLine[0] == '0'){
             continue;
