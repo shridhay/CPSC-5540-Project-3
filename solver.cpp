@@ -71,12 +71,14 @@ class SAT {
         void decrement(){nbunassigned--;}
         tribool parse_idx(int idx){
             if (d.count(abs(idx))){
-                tribool val = d[idx];
+                tribool val = d[abs(idx)];
                 if (idx > 0){
                     return val;
                 } else if (idx < 0){
                     if (val == tribool::True){
                         return tribool::False;
+                    } else if (val == tribool::False){
+                        return tribool::True;
                     } else {
                         return tribool::True;
                     }
@@ -133,13 +135,22 @@ class SAT {
             return val;
         }
         bool check_sat(){
-            // for (int i = 0; i < clauses.size(); i++){
-            //     vector<int> clause = clauses.at(i);
-            //     for (int j = 0; j < clause.size(); j++){
-            //         int literal = clause.at(j);
-
-            //     }
-            // }
+            for (int i = 0; i < clauses.size(); i++){
+                vector<int> clause = clauses.at(i);
+                bool clause_satisfied = false;
+                for (int j = 0; j < clause.size(); j++){
+                    int literal = clause.at(j);
+                    tribool val = parse_idx(literal);
+                    if (val == tribool::True){
+                        clause_satisfied = true;
+                        break;
+                    }
+                }
+                if (!clause_satisfied){
+                    return false;
+                }
+            }
+            return true;
         }
         bool set_assignment(int idx, tribool b){
             if (d.count(idx)){
