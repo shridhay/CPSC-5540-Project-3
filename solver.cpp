@@ -61,7 +61,9 @@ class SAT {
         void update(){
             unassigned_keys.clear();
             for (const auto& p : d) {
-                unassigned_keys.insert(p.first);
+                if (p.second == tribool::None) {  
+                    unassigned_keys.insert(p.first);
+                }
             }
             nbunassigned = unassigned_keys.size();
         }
@@ -175,7 +177,10 @@ class SAT {
                 }
             }
         }
-        unordered_map<int, tribool> get_assignment();
+        unordered_map<int, tribool> get_assignment(){
+            unordered_map<int, tribool> m = d;
+            return m;
+        }
         bool solve(){
             bool sol = dpll();
             if (sol){
@@ -269,6 +274,7 @@ int main(int argc, char *argv[]){
         }
     }
     inputFile.close();
+    solver.solve();
     return 0;
 }
 
