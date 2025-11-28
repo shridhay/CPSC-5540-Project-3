@@ -4,6 +4,7 @@ import random
 
 Clause = list[int]
 LiteralIdx = int
+DecisionLevel = int
 
 class SAT:
     def __init__(self, numOfVars, numOfClauses):
@@ -11,8 +12,11 @@ class SAT:
         self.nbclauses = numOfClauses
         self.nbunassigned = numOfVars
         self.clauses: list[Clause] = []
-        self.stack: list[tuple[LiteralIdx, bool, int, bool]] = []
+        self.stack: list[tuple[LiteralIdx, bool, DecisionLevel, Clause | None]] = []
         self.d: dict[LiteralIdx, bool | None] = {i: None for i in range(1, self.nbvars + 1)}
+        self.level: dict[LiteralIdx, int] = {i: 0 for i in range(1, self.nbvars+1)}
+        self.reason: dict[LiteralIdx, Clause | None] = {i: None for i in range(1, self.nbvars+1)}
+        self.decision_level: DecisionLevel = 0
         self.unassigned_keys = set(self.d.keys())
         self.stack_size = len(self.stack)
         self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
@@ -144,7 +148,7 @@ class SAT:
         return copy.deepcopy(self.d)
     
     def solve(self):
-        sol = self.dpll()
+        sol = self.cdcl()
         if sol:
             self.print_assignment()
         else:
@@ -219,6 +223,261 @@ class SAT:
                         self.set_assignment(idx, (literal > 0))
                         modified = True
         return True
+    
+    def clauses_containing(self, literal: int) -> list[Clause]:
+        """
+        Return all clauses that contain the given literal.
+        """
+        result = []
+        for clause in self.clauses:
+            if literal in clause:
+                result.append(clause)
+        return result
+
+    
+    def unit_prop_cdcl(self) -> Clause | None:
+        """
+        Propagates all consequences of assigned literals.
+        Returns a conflicting clause if any, otherwise None.
+        """
+        #print(f"\n[Unit Propagation] decision_level={self.decision_level}")
+        #print("Current assignment:", {k: self.d[k] for k in self.d})
+
+        # Start with all assigned variables
+        propagation_queue = [(var if val else -var) for var, val, lvl, reason in self.stack]
+
+
+        processed = set()
+
+        while propagation_queue:
+            literal = propagation_queue.pop()
+            if literal in processed:
+                continue
+            processed.add(literal)
+
+            for clause in self.clauses:
+                # Skip if clause already satisfied
+                if any(self.parse_idx(lit) is True for lit in clause):
+                    continue
+
+                # Collect unassigned literals
+                unassigned = [l for l in clause if self.d[abs(l)] is None]
+
+                if len(unassigned) == 0:
+                    # Clause is falsified. 
+                    # Check if *any* falsified literal is from the current decision level.
+                    has_current_level = False
+                    for lit in clause:
+                        var = abs(lit)
+                        # Literal is false if:
+                        #   - var assigned False and lit > 0
+                        #   - var assigned True  and lit < 0
+                        if self.d[var] is not None:
+                            false_literal = (self.d[var] is False and lit > 0) or \
+                                            (self.d[var] is True  and lit < 0)
+                            if false_literal and self.level[var] == self.decision_level:
+                                has_current_level = True
+                                break
+
+                    if has_current_level:
+                        #print(f"Conflict found in clause {clause}")
+                        return clause
+
+                    # Otherwise: clause is falsified but NOT due to current level → 
+                    # NOT a real conflict for this level. Ignore it.
+                    continue
+
+
+                if len(unassigned) == 1:
+                    # Unit clause found
+                    unit = unassigned[0]
+                    idx = abs(unit)
+                    value = unit > 0
+
+                    if self.d[idx] is None:
+                        self.d[idx] = value
+                        self.level[idx] = self.decision_level
+                        self.reason[idx] = clause
+                        self.stack.append((idx, value, self.decision_level, clause))
+                        propagation_queue.append(idx)  # propagate new assignment
+
+        return None
+
+
+    def pure_literal_elim_cdcl(self):
+        positive, negative = set(), set()
+        
+        # Scan all clauses
+        for clause in self.clauses:
+            for literal in clause:
+                idx = abs(literal)
+                if self.d[idx] is None:
+                    if literal > 0:
+                        positive.add(idx)
+                    else:
+                        negative.add(idx)
+        
+        # Assign pure literals
+        for idx in range(1, self.nbvars + 1):
+            if self.d[idx] is None:
+                if (idx in positive) and not (idx in negative):
+                    self.stack.append((idx, True, 0, None))
+                    self.d[idx] = True
+                    self.level[idx] = 0
+                    self.reason[idx] = None
+                elif (idx in negative) and not (idx in positive):
+                    self.stack.append((idx, False, 0, None))
+                    self.d[idx] = False
+                    self.level[idx] = 0
+                    self.reason[idx] = None
+
+        return True
+    
+    def cdcl(self) -> bool:
+        self.decision_level = 0
+        self.pure_literal_elim_cdcl()
+        conflict = self.unit_prop_cdcl()
+        #print("MEGA CONFLICT")
+        #print(conflict)
+        if conflict:
+            return False
+
+        while True:
+            if all(self.d[var] is not None for var in self.d):
+                return True
+
+            self.decision_level += 1
+            var = self.pick_unassigned_variable()
+            value = True
+            self.d[var] = value
+            self.level[var] = self.decision_level
+            self.reason[var] = None
+            self.stack.append((var, value, self.decision_level, None))
+
+            while True:
+                conflict = self.unit_prop_cdcl()
+                # conflict handling inside cdcl(), replace current block with this
+                if conflict:
+                    #print(">>> CONFLICT handler entry")
+                    #print(" conflict clause:", conflict)
+                    # analyze
+                    learned_clause, backjump_level = self.analyze_conflict(conflict)
+                    #print(" learned_clause (post-analyze):", learned_clause)
+                    #print(" levels (learned):", {lit: self.level[abs(lit)] for lit in learned_clause})
+                    #print(" decision_level (old):", self.decision_level, " backjump_level:", backjump_level)
+
+                    # defensive check for UIP
+                    old_level = self.decision_level
+                    candidates = [lit for lit in learned_clause if self.level[abs(lit)] == old_level]
+                    #print(" candidates at old level:", candidates)
+
+                    # if not the expected single candidate, dump stack + recent assignments
+                    if len(candidates) != 1:
+                        #print("STACK (top 20):", self.stack[-20:])
+                        #print("ASSIGNMENTS (vars in learned):", {abs(l): (self.d[abs(l)], self.level[abs(l)], self.reason[abs(l)]) for l in learned_clause})
+                        raise RuntimeError(f"ANALYSIS FAILURE: Expected 1 UIP literal, got {candidates}")
+
+                    asserting_literal = candidates[0]
+                    #print(" asserting_literal:", asserting_literal)
+
+                    # now backjump once
+                    self.backjump(backjump_level)
+                    #print(" backjumped to", backjump_level, "current decision_level:", self.decision_level)
+
+                    # If we are at root level, check if the learned clause is immediately contradictory
+                    if backjump_level == 0:
+                        # If every literal is already false or becomes false at root,
+                        # the formula is UNSAT.
+                        if all(self.d[abs(lit)] is not None and self.parse_idx(lit) is False
+                            for lit in learned_clause):
+                            #print("UNSAT at root")
+                            return False
+
+
+                    # assert UIP
+                    idx = abs(asserting_literal); val = asserting_literal > 0
+                    if self.d[idx] is not None:
+                        #print("Warning: asserting literal already assigned after backjump:", idx, self.d[idx])
+                        pass
+                    else:
+                        self.d[idx] = val
+                        self.level[idx] = backjump_level
+                        self.reason[idx] = learned_clause
+                        self.stack.append((idx, val, backjump_level, learned_clause))
+                    continue
+
+                else:
+                    break
+
+    def pick_unassigned_variable(self) -> LiteralIdx:
+        """
+        Return an unassigned variable. 
+        For now, simple heuristic: pick the first unassigned.
+        """
+        for var in self.unassigned_keys:
+            if self.d[var] is None:
+                return var
+        raise RuntimeError("No unassigned variables left")  # should not happen
+    
+    def analyze_conflict(self, conflict_clause: Clause) -> tuple[Clause, DecisionLevel]:
+        #print("Decision level:", self.decision_level)
+        #print("Assignments:")
+        for v in conflict_clause:
+            v = abs(v)
+            #print(v, "value:", self.d[v], "level:", self.level[v], "reason:", self.reason[v])
+
+        learned = conflict_clause.copy()
+        current_level = self.decision_level
+
+        while True:
+            # Count literals at current level
+            curr_level_lits = [lit for lit in learned if self.level[abs(lit)] == current_level]
+
+            # Stop when 1-UIP reached
+            if len(curr_level_lits) <= 1:
+                num_curr_level = sum(1 for lit in learned if self.level[abs(lit)] == current_level)
+                #print("CLAUSE:", learned)
+                #print("LEVELS:", {lit: self.level[abs(lit)] for lit in learned})
+                #print("current_level:", current_level, "num_curr_level:", num_curr_level)
+                break
+
+            # Pick literal at current level with a reason
+            for lit in curr_level_lits:
+                idx = abs(lit)
+                if self.reason[idx] is not None:
+                    assert self.reason[idx] is not None
+                    learned = self.resolve(learned, self.reason[idx], idx)
+                    break
+            else:
+                # No literal with reason found => cannot reduce further
+                break
+
+        # Backjump level: highest level among other literals
+        backjump_level = max((self.level[abs(lit)] for lit in learned if self.level[abs(lit)] != current_level), default=0)
+        return learned, backjump_level
+
+    
+    def resolve(self, clause1: Clause, clause2: Clause, pivot: int) -> Clause:
+        """
+        Resolve two clauses on the pivot variable.
+        """
+        res = set(clause1).union(clause2)
+        res.discard(pivot)
+        res.discard(-pivot)
+        return list(res)
+
+    def backjump(self, level):
+        while self.stack and self.stack[-1][2] > level:
+            var, _, _, _ = self.stack.pop()
+            self.d[var] = None
+            self.level[var] = 0
+            self.reason[var] = None
+            self.unassigned_keys.add(var)
+        self.decision_level = level
+
+        
+
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
