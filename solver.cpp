@@ -5,14 +5,13 @@
 #include <vector>
 #include <string>
 #include <unordered_set>
-#include <unordered_map>
 #include <stack>
 #include <ctime>
 #include <random>
 
 using namespace std;
 
-enum class tribool {True, False, None};
+enum class tribool : char {True, False, None};
 
 class SAT {
     private:
@@ -31,6 +30,7 @@ class SAT {
             nbunassigned = numOfVars;
             unassigned_keys.assign(nbvars + 1, true);
             umap.assign(nbvars + 1, tribool::None);
+            clauses.reserve(numOfClauses);
         }
         int getInt(int max){return (mt_rand() % max);}
         void reseed(){mt_rand.seed(time(NULL));}
@@ -45,7 +45,7 @@ class SAT {
                     clause.push_back(n);
                 }
             }
-            clauses.push_back(clause);
+            clauses.push_back(std::move(clause));
         }
         tribool parse_idx(int idx){
             if (umap.at(abs(idx)) != tribool::None){
