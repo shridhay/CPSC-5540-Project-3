@@ -5,7 +5,6 @@
 #include <vector>
 #include <string>
 #include <unordered_set>
-#include <stack>
 #include <ctime>
 #include <random>
 
@@ -18,7 +17,7 @@ class SAT {
         int nbvars;
         int nbunassigned;
         vector<vector<int> > clauses;
-        stack<int> s;
+        vector<int> s;
         vector<tribool> umap;
         vector<bool> unassigned_keys;
         mt19937 mt_rand;
@@ -49,13 +48,13 @@ class SAT {
         }
         tribool parse_idx(int idx){
             if (umap.at(abs(idx)) != tribool::None){
-                tribool val = umap[abs(idx)];
+                tribool value = umap[abs(idx)];
                 if (idx > 0){
-                    return val;
+                    return value;
                 } else if (idx < 0){
-                    if (val == tribool::True){
+                    if (value == tribool::True){
                         return tribool::False;
-                    } else if (val == tribool::False){
+                    } else if (value == tribool::False){
                         return tribool::True;
                     } else {
                         return tribool::None;
@@ -70,19 +69,18 @@ class SAT {
         bool all_assigned(){return nbunassigned == 0;}
         int choose_random_key(){
             if (all_assigned()) return -1;
-            vector<int> v;
-            v.reserve(nbunassigned);
+            vector<int> temp;
+            temp.reserve(nbunassigned);
             for (int i = 1; i < nbvars + 1; i++){
-                if (unassigned_keys.at(i)) v.push_back(i);
+                if (unassigned_keys.at(i)) temp.push_back(i);
             }
-            return v.at(getInt(v.size()));
+            return temp.at(getInt(temp.size()));
         }
         bool check_sat(){
-            for (int i = 0; i < clauses.size(); i++){
-                const auto& clause = clauses[i];
+            for (const vector<int>& clause : clauses){
                 bool satisfied = false;
-                for (int j = 0; j < clause.size(); j++){
-                    if (parse_idx(clause.at(j)) == tribool::True){
+                for(const int& literal : clause){
+                    if (parse_idx(literal) == tribool::True){
                         satisfied = true;
                         break;
                     }
@@ -92,8 +90,11 @@ class SAT {
             return true;
         }
         void set_assignment(int idx, tribool b){
-            if (umap[idx] == tribool::None && b != tribool::None) nbunassigned--;
-            else if (umap[idx] != tribool::None && b == tribool::None) nbunassigned++;
+            if (umap[idx] == tribool::None && b != tribool::None){
+                nbunassigned--;
+            }else if (umap[idx] != tribool::None && b == tribool::None) {
+                nbunassigned++;
+            }
             umap[idx] = b;
             if (b == tribool::None){ 
                 unassigned_keys[idx] = true;
@@ -102,13 +103,13 @@ class SAT {
             }
         }
         bool stack_push(int idx){
-            s.push(idx);
+            s.push_back(idx);
             return true;
         }
         int stack_pop(){
             if (!s.empty()){
-                int t = s.top();
-                s.pop();
+                int t = s.at(s.size()-1);
+                s.pop_back();
                 return t;
             }
             return 0;
@@ -125,13 +126,13 @@ class SAT {
             }
         }
         bool solve(){
-            bool sol = dpll();
-            if (sol){
+            bool solution = dpll();
+            if (solution){
                 print_assignment();
             } else {
                 cout << "UNSAT" << endl;
             }
-            return sol;
+            return solution;
         }
         void backtrack(int n){
             while (s.size() > n){
@@ -143,33 +144,33 @@ class SAT {
             bool modified = true;
             while (modified) {
                 modified = false;
-                for (const auto& clause : clauses) {
+                for (const vector<int>& clause : clauses) {
                     bool satisfied = false;
-                    int unassigned_count = 0;
-                    int last_unassigned_literal = 0;
-                    for (int literal : clause) {
+                    int count = 0;
+                    int unassigned_literal = 0;
+                    for (const int& literal : clause) {
                         tribool val = parse_idx(literal);
                         if (val == tribool::True) {
                             satisfied = true;
                             break;               
                         }
                         else if (val == tribool::None) {
-                            unassigned_count++;
-                            last_unassigned_literal = literal;
+                            count++;
+                            unassigned_literal = literal;
                         }
                     }
-                    if (!satisfied && unassigned_count == 0) {
+                    if (!satisfied && count == 0) {
                         return false;
                     }
-                    if (!satisfied && unassigned_count == 1) {
+                    if (!satisfied && count == 1) {
                         tribool assignment = tribool::None;
-                        if (last_unassigned_literal > 0){
+                        if (unassigned_literal > 0){
                             assignment = tribool::True;
                         } else {
                             assignment = tribool::False;
                         }
-                        stack_push(abs(last_unassigned_literal));
-                        set_assignment(abs(last_unassigned_literal), assignment);
+                        stack_push(abs(unassigned_literal));
+                        set_assignment(abs(unassigned_literal), assignment);
                         modified = true;
                     }
                 }
@@ -179,8 +180,8 @@ class SAT {
         bool pure_literal_elimination(){
             unordered_set<int> positive;
             unordered_set<int> negative;
-            for (const auto& clause : clauses) {
-                for (const auto& literal : clause) {
+            for (const vector<int>& clause : clauses) {
+                for (const int& literal : clause) {
                     if (parse_idx(literal) == tribool::None){
                         if (literal > 0){
                             positive.insert(literal);
@@ -230,7 +231,7 @@ int main(int argc, char *argv[]){
     ifstream inputFile(filename);
     SAT solver;
     if (!inputFile.is_open()){
-        cout << "Cannot open file: " << filename << endl;
+        cout << "Unable to open file: " << filename << endl;
         return 1;
     }
     string currentLine;
