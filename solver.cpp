@@ -35,6 +35,7 @@ class SAT {
         void reseed(){mt_rand.seed(time(NULL));}
         void parse_line(string line){
             vector<int> clause;
+            // clause.reserve(15);
             int n;
             stringstream ss(line);
             while (ss >> n){
@@ -47,7 +48,7 @@ class SAT {
             clauses.push_back(std::move(clause));
         }
         tribool parse_idx(int idx){
-            if (umap.at(abs(idx)) != tribool::None){
+            if (umap[abs(idx)] != tribool::None){
                 tribool value = umap[abs(idx)];
                 if (idx > 0){
                     return value;
@@ -72,9 +73,9 @@ class SAT {
             vector<int> temp;
             temp.reserve(nbunassigned);
             for (int i = 1; i < nbvars + 1; i++){
-                if (unassigned_keys.at(i)) temp.push_back(i);
+                if (unassigned_keys[i]) temp.push_back(i);
             }
-            return temp.at(getInt(temp.size()));
+            return temp[getInt(temp.size())];
         }
         bool check_sat(){
             for (const vector<int>& clause : clauses){
@@ -108,7 +109,7 @@ class SAT {
         }
         int stack_pop(){
             if (!s.empty()){
-                int t = s.at(s.size()-1);
+                int t = s[s.size()-1];
                 s.pop_back();
                 return t;
             }
