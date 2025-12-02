@@ -16,10 +16,15 @@ class SAT {
     private:
         int nbvars;
         int nbunassigned;
+        int nbconflicts = 0;
+        int nbrestarts = 0;
+        int limit = 5000;
+        double alpha = 0.9;
         vector<vector<int> > clauses;
         vector<int> s;
         vector<tribool> umap;
         vector<bool> unassigned_keys;
+        vector<double> log;
         mt19937 mt_rand;
         
     public:
@@ -30,12 +35,33 @@ class SAT {
             unassigned_keys.assign(nbvars + 1, true);
             umap.assign(nbvars + 1, tribool::None);
             clauses.reserve(numOfClauses);
+            log.assign(nbvars + 1, 0.0);
+        }
+        void cold_restart(){
+            nbrestarts++;
+            nbconflicts = 0;
+            s.clear();
+            umap.clear();
+            umap.assign(nbvars + 1, tribool::None);
+            unassigned_keys.clear();
+            unassigned_keys.assign(nbvars + 1, true);
+            log.clear();
+            log.assign(nbvars + 1, 0.0);
+            nbunassigned = nbvars;
+            decay_keys();
+        }
+        void update_log(int idx){
+            log[idx] = log[idx] + 1;
+        }
+        void decay_keys(){
+            for(int i = 1; i < nbvars + 1; i++){
+                log[i] = 0.93 * log[i];
+            }
         }
         int getInt(int max){return (mt_rand() % max);}
         void reseed(){mt_rand.seed(time(NULL));}
         void parse_line(string line){
             vector<int> clause;
-            // clause.reserve(15);
             int n;
             stringstream ss(line);
             while (ss >> n){
@@ -68,12 +94,24 @@ class SAT {
             }
         }
         bool all_assigned(){return nbunassigned == 0;}
-        int choose_random_key(){
-            if (all_assigned()) return -1;
+        int choose_key(){
+            // if (all_assigned()) return -1;
+            // vector<int> temp;
+            // temp.reserve(nbunassigned);
+            // for (int i = 1; i < nbvars + 1; i++){
+            //     if (unassigned_keys[i]) temp.push_back(i);
+            // }
             vector<int> temp;
-            temp.reserve(nbunassigned);
+            double maximum = -1.0;
             for (int i = 1; i < nbvars + 1; i++){
-                if (unassigned_keys[i]) temp.push_back(i);
+                if ((unassigned_keys[i]) && (log[i] > maximum)){
+                    maximum = log[i];
+                }
+            }
+            for (int i = 1; i < nbvars + 1; i++){
+                if ((unassigned_keys[i]) && (log[i] == maximum)){
+                    temp.push_back(i);
+                }
             }
             return temp[getInt(temp.size())];
         }
@@ -161,6 +199,11 @@ class SAT {
                         }
                     }
                     if (!satisfied && count == 0) {
+                        nbconflicts += 1;
+                        for (const int& literal : clause){
+                            update_log(abs(literal));
+                        }
+                        decay_keys();
                         return false;
                     }
                     if (!satisfied && count == 1) {
@@ -206,10 +249,14 @@ class SAT {
             return true;
         }
         bool dpll(){
+            if (nbconflicts >= limit){
+                cold_restart();
+                return dpll();
+            }
             if (!unit_propagation()) return false;
             pure_literal_elimination();
             if (all_assigned()) return check_sat();
-            int idx = choose_random_key();
+            int idx = choose_key();
             int size = s.size();
             stack_push(idx); 
             set_assignment(idx, tribool::True);
