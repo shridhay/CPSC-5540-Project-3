@@ -12,11 +12,12 @@ class SAT:
         self.d = {i: None for i in range(1, self.nbvars + 1)}
         self.unassigned_keys = set(self.d.keys())
         self.stack_size = len(self.stack)
-        self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
-        self.limit = 100  
+        self.log = {i: 0 for i in range(1, self.nbvars + 1)}
+        self.alpha = 0.95
+        # self.limit = 100  
         self.conflicts = 0       
-        self.maximum = 50    
-        self.nbrestarts = 0
+        # self.maximum = 50    
+        # self.nbrestarts = 0
 
     def parse_line(self, line):
         self.clauses.append(list(map(int, line.split()))[:-1])
@@ -32,9 +33,6 @@ class SAT:
     def update(self):
         self.unassigned_keys = {key for key in self.d.keys() if self.d[key] is None}
         self.nbunassigned = len(self.unassigned_keys)
-    
-    def parse_line(self, line):
-        self.clauses.append(list(map(int, line.split()))[:-1])
 
     def increment(self):
         self.nbunassigned += 1
@@ -92,22 +90,18 @@ class SAT:
                     literals.append(f"x{literal}")
             clause_strs.append("(" + " ∨ ".join(literals) + ")")
         return " ∧ ".join(clause_strs)
-
-    def choose_random_key(self):
-        return random.choice(list(self.unassigned_keys))
-            
-    # def choose_random_assignment(self):
-    #     assign_dict = copy.deepcopy(self.d)
-    #     for key in assign_dict:
-    #         assign_dict[key] = random.choice([True, False])
-    #     return assign_dict
     
-    # def set_random_assignment(self, idx):
-    #     if idx in self.d.keys():
-    #         self.d[idx] = random.choice([True, False])
-    #         return True
-    #     else:
-    #         return False
+    def update_log(self, idx):
+        self.log[idx] += 1
+
+    def choose_key(self):
+        # return random.choice(list(self.unassigned_keys))
+        temp = {k: self.log[k] for k in self.unassigned_keys}
+        return max(temp, key = temp.get)
+
+    def decay_keys(self):
+        for key in self.log:
+            self.log[key] = self.alpha * self.log[key]
 
     def check_sat(self):
         return all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
@@ -158,12 +152,12 @@ class SAT:
             self.nbunassigned += 1
 
     def dpll(self):
-        if self.conflicts > self.limit:
-            if self.nbrestarts < self.maximum:
-                self.cold_restart()
-                return self.dpll()
-            else:
-                return False
+        # if self.conflicts > self.limit:
+        #     if self.nbrestarts < self.maximum:
+        #         self.cold_restart()
+        #         return self.dpll()
+        #     else:
+        #         return False
         if not(self.unit_propagation()):
             return False
         self.update()
@@ -171,7 +165,7 @@ class SAT:
         self.update()
         if self.all_assigned():
             return self.check_sat()
-        idx = self.choose_random_key()
+        idx = self.choose_key()
         size = self.get_size()
         self.stack_push(idx, True, True)
         self.set_assignment(idx, True)
@@ -214,6 +208,8 @@ class SAT:
                 unassigned_literals = [literal for literal in clause if self.parse_idx(literal) is None]
                 if len(unassigned_literals) == 0:
                     self.conflicts += 1
+                    for literal in clause:
+                        self.update_log(abs(literal))
                     return False
                 if len(unassigned_literals) == 1:
                     literal = unassigned_literals[0]
