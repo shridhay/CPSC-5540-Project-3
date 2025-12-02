@@ -18,13 +18,16 @@ class SAT {
         int nbunassigned;
         int nbconflicts = 0;
         int nbrestarts = 0;
-        int limit = 5000;
-        double alpha = 0.9;
+        int limit = 4000;
+        double alpha = 0.92;
+        double alpha_increment = 1.01; 
+        double alpha_max = 0.99;
         vector<vector<int> > clauses;
         vector<int> s;
         vector<tribool> umap;
         vector<bool> unassigned_keys;
         vector<double> log;
+        vector<bool> polarity;
         mt19937 mt_rand;
         
     public:
@@ -36,6 +39,7 @@ class SAT {
             umap.assign(nbvars + 1, tribool::None);
             clauses.reserve(numOfClauses);
             log.assign(nbvars + 1, 0.0);
+            polarity.assign(nbvars + 1, true);
         }
         void cold_restart(){
             nbrestarts++;
@@ -45,9 +49,8 @@ class SAT {
             umap.assign(nbvars + 1, tribool::None);
             unassigned_keys.clear();
             unassigned_keys.assign(nbvars + 1, true);
-            log.clear();
-            log.assign(nbvars + 1, 0.0);
             nbunassigned = nbvars;
+            alpha = min(alpha_max, alpha * alpha_increment);
             decay_keys();
         }
         void update_log(int idx){
@@ -55,7 +58,7 @@ class SAT {
         }
         void decay_keys(){
             for(int i = 1; i < nbvars + 1; i++){
-                log[i] = 0.93 * log[i];
+                log[i] = alpha * log[i];
             }
         }
         int getInt(int max){return (mt_rand() % max);}
@@ -95,12 +98,6 @@ class SAT {
         }
         bool all_assigned(){return nbunassigned == 0;}
         int choose_key(){
-            // if (all_assigned()) return -1;
-            // vector<int> temp;
-            // temp.reserve(nbunassigned);
-            // for (int i = 1; i < nbvars + 1; i++){
-            //     if (unassigned_keys[i]) temp.push_back(i);
-            // }
             vector<int> temp;
             double maximum = -1.0;
             for (int i = 1; i < nbvars + 1; i++){
@@ -139,6 +136,11 @@ class SAT {
                 unassigned_keys[idx] = true;
             } else {
                 unassigned_keys[idx] = false;
+                if (b == tribool::True){
+                    polarity[idx] = true;
+                } else if (b == tribool::False){
+                    polarity[idx] = false;
+                }
             }
         }
         bool stack_push(int idx){
@@ -238,10 +240,8 @@ class SAT {
             for(int idx = 1; idx < nbvars + 1; idx++){
                 if (umap[idx] == tribool::None){
                     if (positive.count(idx) && !negative.count(idx)){
-                        // stack_push(idx);
                         set_assignment(idx, tribool::True);
                     } else if (negative.count(idx) && !positive.count(idx)){
-                        // stack_push(idx);
                         set_assignment(idx, tribool::False);
                     }
                 }
@@ -259,11 +259,13 @@ class SAT {
             int idx = choose_key();
             int size = s.size();
             stack_push(idx); 
-            set_assignment(idx, tribool::True);
+            tribool top = polarity[idx] ? tribool::True : tribool::False;
+            set_assignment(idx, top);
             if (dpll()) return true;
             backtrack(size);
             stack_push(idx);
-            set_assignment(idx, tribool::False);
+            tribool bottom = polarity[idx] ? tribool::False : tribool::True;
+            set_assignment(idx, bottom);
             if (dpll()) return true;
             backtrack(size);
             return false;
