@@ -4,12 +4,22 @@ This implementation was developed by Jonathan Chen and Hridhay Suresh.
 
 ## Requirements
 
-This program is written in **Python 3.14**. It may work on earlier versions too.
+This SAT Solver is written in C++17, but may run on previous C++ versions. 
 
-This program also requires the `numpy` library version 2.2.6, which can be installed through `pip install numpy`. It is recommended to run in a virtual environment or conda environment containing numpy. No other libraries are needed.
+## Running the SAT Solver
+
+To run this SAT solver, run `g++ -std=c++17 -O3 -o solver solver.cpp`, followed by `chmod +x solver` in the terminal.  Finally run `./solver <path_to_cnf_file>` in the terminal.
+
+## Extensions
+
+We implemented 5 extensions in this project:
+
+1) Cold Restart based on an enumeration of variable conflicts.
+2) VSIDS heuristic for selecting variables to assign based on the most frequented variables.
+3) Polarity saving that remembers the assigment of previously assigned variables.
+4) Dynamically adjusting decay for the VSIDS heuristic.
+5) Randomized Tie-breaking for the VSIDS heuristic.
 
 ## Quick Start
 
-To test on a benchmark 1, run "`python solver.py benchmarks/sat/bench1.txt`".
-
-For convenience we have included `./run_tests.sh` which runs over all benchmarks. This shell file can be executed directly after `chmod +x run_tests.sh`, or indirectly via `sh run_tests.sh`.
+We have provided a benchmark as well as a test script.  To run the test script run `chmod +x testcpp.sh`, followed by `sh testcpp.sh` in the terminal.
