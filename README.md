@@ -15,7 +15,7 @@ To run this SAT solver, run `g++ -std=c++17 -O3 -o solver solver.cpp`, followed 
 We implemented 5 extensions in this project:
 
 1) Cold Restart based on an enumeration of variable conflicts.
-2) VSIDS heuristic for selecting variables to assign based on the most frequented variables.
+2) Variable State Independent Decaying Sum (VSIDS) heuristic for selecting variables to assign based on the most frequented variables.
 3) Polarity saving that remembers the assigment of previously assigned variables.
 4) Dynamically adjusting decay for the VSIDS heuristic.
 5) Randomized Tie-breaking for the VSIDS heuristic.
