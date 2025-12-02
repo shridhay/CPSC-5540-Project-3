@@ -13,11 +13,18 @@ class SAT:
         self.unassigned_keys = set(self.d.keys())
         self.stack_size = len(self.stack)
         self.blank_slate = {i: None for i in range(1, self.nbvars + 1)}
+        self.limit = 100  
+        self.conflicts = 0       
+        self.maximum = 50    
+        self.nbrestarts = 0
 
     def parse_line(self, line):
         self.clauses.append(list(map(int, line.split()))[:-1])
 
     def cold_restart(self):
+        self.nbrestarts += 1
+        self.conflicts = 0   
+        self.stack = []
         self.d = {i: None for i in range(1, self.nbvars + 1)}
         self.unassigned_keys = set(self.d.keys())
         self.nbunassigned = len(self.unassigned_keys)
@@ -45,7 +52,6 @@ class SAT:
             return not(val)
         
     def all_assigned(self):
-        # self.update()
         return self.nbunassigned == 0
         
     def print_clauses(self):
@@ -54,15 +60,10 @@ class SAT:
     def print_nbvars(self):
         print(self.nbvars)
 
-    def print_nbclauses(self):
-        print(self.nbclauses)
-
     def print_unassigned_keys(self):
-        # self.update()
         print(self.unassigned_keys)
 
     def print_nbunassigned(self):
-        # self.update()
         print(self.nbunassigned)
 
     def get_clauses(self):
@@ -114,14 +115,12 @@ class SAT:
     def set_assignment(self, idx, b):
         if idx in self.d.keys():
             self.d[idx] = b
-            # self.update()
             return True
         else:
-            # self.update()
             return False        
 
     def stack_push(self, idx, value, decision):
-        self.stack.append((idx, value, self.nbunassigned, decision))
+        self.stack.append(idx)
 
     def stack_pop(self):
         if not(self.stack_empty()):
@@ -153,13 +152,18 @@ class SAT:
     
     def backtrack(self, n):
         while len(self.stack) > n:
-            idx, _, _, _= self.stack_pop()
+            idx = self.stack_pop()
             self.d[idx] = None
             self.unassigned_keys.add(idx)
             self.nbunassigned += 1
-        # self.update()
 
     def dpll(self):
+        if self.conflicts > self.limit:
+            if self.nbrestarts < self.maximum:
+                self.cold_restart()
+                return self.dpll()
+            else:
+                return False
         if not(self.unit_propagation()):
             return False
         self.update()
@@ -167,7 +171,6 @@ class SAT:
         self.update()
         if self.all_assigned():
             return self.check_sat()
-        # idx = random.choice(list(self.unassigned_keys))
         idx = self.choose_random_key()
         size = self.get_size()
         self.stack_push(idx, True, True)
@@ -206,10 +209,11 @@ class SAT:
         while modified:
             modified = False
             for clause in self.clauses:
-                if any(self.parse_idx(literal) is True for literal in clause):
+                if any(self.parse_idx(literal) == True for literal in clause):
                     continue
                 unassigned_literals = [literal for literal in clause if self.parse_idx(literal) is None]
                 if len(unassigned_literals) == 0:
+                    self.conflicts += 1
                     return False
                 if len(unassigned_literals) == 1:
                     literal = unassigned_literals[0]
