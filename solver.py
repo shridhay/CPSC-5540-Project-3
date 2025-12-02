@@ -13,22 +13,47 @@ class SAT:
         self.unassigned_keys = set(self.d.keys())
         self.stack_size = len(self.stack)
         self.log = {i: 0 for i in range(1, self.nbvars + 1)}
-        self.alpha = 0.95
-        # self.limit = 100  
-        self.conflicts = 0       
+        self.alpha = 0.80
+        self.limit = 300
+        self.nbconflicts = 0       
         # self.maximum = 50    
-        # self.nbrestarts = 0
+        self.nbrestarts = 0
 
     def parse_line(self, line):
         self.clauses.append(list(map(int, line.split()))[:-1])
 
     def cold_restart(self):
         self.nbrestarts += 1
-        self.conflicts = 0   
+        self.nbconflicts = 0   
         self.stack = []
         self.d = {i: None for i in range(1, self.nbvars + 1)}
         self.unassigned_keys = set(self.d.keys())
         self.nbunassigned = len(self.unassigned_keys)
+        self.decay_keys()
+
+    def luby(self, idx):
+        k = 1
+        while (1 << k) < idx + 1:  
+            k += 1
+        if (1 << k) == idx + 1:  
+            return 1 << (k - 1) 
+        return self.luby(idx - (1 << (k - 1)) + 1)
+    
+    def update_log(self, idx):
+        self.log[idx] += 1
+
+    def choose_key(self):
+        temp = {key: self.log[key] for key in self.unassigned_keys}
+        maximum = max(temp.values())
+        return random.choice([key for key, value in temp.items() if value == maximum])
+
+    def decay_keys(self):
+        for key in self.log:
+            self.log[key] = 0.95 * self.log[key]
+
+    def should_restart(self):
+        luby_value = self.luby(self.nbrestarts + 1)
+        return self.nbconflicts >= luby_value * self.limit
 
     def update(self):
         self.unassigned_keys = {key for key in self.d.keys() if self.d[key] is None}
@@ -91,18 +116,6 @@ class SAT:
             clause_strs.append("(" + " ∨ ".join(literals) + ")")
         return " ∧ ".join(clause_strs)
     
-    def update_log(self, idx):
-        self.log[idx] += 1
-
-    def choose_key(self):
-        # return random.choice(list(self.unassigned_keys))
-        temp = {k: self.log[k] for k in self.unassigned_keys}
-        return max(temp, key = temp.get)
-
-    def decay_keys(self):
-        for key in self.log:
-            self.log[key] = self.alpha * self.log[key]
-
     def check_sat(self):
         return all(any(self.parse_idx(literal) == True for literal in clause) for clause in self.clauses)
     
@@ -152,12 +165,9 @@ class SAT:
             self.nbunassigned += 1
 
     def dpll(self):
-        # if self.conflicts > self.limit:
-        #     if self.nbrestarts < self.maximum:
-        #         self.cold_restart()
-        #         return self.dpll()
-        #     else:
-        #         return False
+        if self.should_restart():
+            self.cold_restart()
+            return self.dpll()
         if not(self.unit_propagation()):
             return False
         self.update()
@@ -207,9 +217,10 @@ class SAT:
                     continue
                 unassigned_literals = [literal for literal in clause if self.parse_idx(literal) is None]
                 if len(unassigned_literals) == 0:
-                    self.conflicts += 1
+                    self.nbconflicts += 1
                     for literal in clause:
                         self.update_log(abs(literal))
+                    self.decay_keys()
                     return False
                 if len(unassigned_literals) == 1:
                     literal = unassigned_literals[0]
