@@ -240,13 +240,17 @@ class SAT:
         Propagates all consequences of assigned literals.
         Returns a conflicting clause if any, otherwise None.
         """
-        #print(f"\n[Unit Propagation] decision_level={self.decision_level}")
-        #print("Current assignment:", {k: self.d[k] for k in self.d})
-
-        # Start with all assigned variables
-        propagation_queue = [(var if val else -var) for var, val, lvl, reason in self.stack]
-
-
+        
+        start_index = getattr(self, '_last_propagated_index', 0)
+        propagation_queue = []
+        
+        for i in range(start_index, len(self.stack)):
+            var, val, _, _ = self.stack[i]
+            literal = var if val else -var
+            propagation_queue.append(literal)
+        
+        self._last_propagated_index = len(self.stack)
+        
         processed = set()
 
         while propagation_queue:
@@ -256,22 +260,15 @@ class SAT:
             processed.add(literal)
 
             for clause in self.clauses:
-                # Skip if clause already satisfied
                 if any(self.parse_idx(lit) is True for lit in clause):
                     continue
 
-                # Collect unassigned literals
                 unassigned = [l for l in clause if self.d[abs(l)] is None]
 
                 if len(unassigned) == 0:
-                    # Clause is falsified. 
-                    # Check if *any* falsified literal is from the current decision level.
                     has_current_level = False
                     for lit in clause:
                         var = abs(lit)
-                        # Literal is false if:
-                        #   - var assigned False and lit > 0
-                        #   - var assigned True  and lit < 0
                         if self.d[var] is not None:
                             false_literal = (self.d[var] is False and lit > 0) or \
                                             (self.d[var] is True  and lit < 0)
@@ -280,16 +277,10 @@ class SAT:
                                 break
 
                     if has_current_level:
-                        #print(f"Conflict found in clause {clause}")
                         return clause
-
-                    # Otherwise: clause is falsified but NOT due to current level → 
-                    # NOT a real conflict for this level. Ignore it.
                     continue
 
-
                 if len(unassigned) == 1:
-                    # Unit clause found
                     unit = unassigned[0]
                     idx = abs(unit)
                     value = unit > 0
@@ -299,7 +290,7 @@ class SAT:
                         self.level[idx] = self.decision_level
                         self.reason[idx] = clause
                         self.stack.append((idx, value, self.decision_level, clause))
-                        propagation_queue.append(idx)  # propagate new assignment
+                        propagation_queue.append(unit)  # Add to queue for further propagation
 
         return None
 
@@ -474,6 +465,7 @@ class SAT:
             self.reason[var] = None
             self.unassigned_keys.add(var)
         self.decision_level = level
+        self._last_propagated_index = len(self.stack) 
 
         
 
