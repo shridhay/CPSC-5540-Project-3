@@ -70,7 +70,7 @@ class SAT {
             return p >> 1 ? p >> 1 : 1;
         }
         void update_log(int idx){
-            log[idx] = log[idx] + 1;
+            log[idx]++;
         }
         void decay_keys(){
             for(int i = 1; i < nbvars + 1; i++){
@@ -130,7 +130,7 @@ class SAT {
         bool check_sat(){
             for (const vector<int>& clause : clauses){
                 bool satisfied = false;
-                for(const int& literal : clause){
+                for (const int& literal : clause){
                     if (parse_idx(literal) == tribool::True){
                         satisfied = true;
                         break;
@@ -143,7 +143,7 @@ class SAT {
         void set_assignment(int idx, tribool b){
             if (umap[idx] == tribool::None && b != tribool::None){
                 nbunassigned--;
-            }else if (umap[idx] != tribool::None && b == tribool::None) {
+            } else if (umap[idx] != tribool::None && b == tribool::None) {
                 nbunassigned++;
             }
             umap[idx] = b;
@@ -171,7 +171,7 @@ class SAT {
             return 0;
         }
         void print_assignment(){
-            for(int i = 1; i < nbvars + 1; i++){
+            for (int i = 1; i < nbvars + 1; i++){
                 if (umap[i] == tribool::True){
                     cout << "Key: " << i << ", Value: True"  << endl;
                 } else if (umap[i] == tribool::False){
