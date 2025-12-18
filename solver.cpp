@@ -53,6 +53,22 @@ class SAT {
             alpha = min(alpha_max, alpha * alpha_increment);
             decay_keys();
         }
+        int luby(int i) {
+            int k = 1, p = 1;
+            while (k < i + 1) {
+                k *= 2;
+                p *= 2;
+            }
+            while (k != i + 1) {
+                k /= 2;
+                p /= 2;
+                if (k < i + 1) {
+                    i -= k;
+                    k *= 2;
+                }
+            }
+            return p / 2 ? p / 2 : 1;
+        }
         void update_log(int idx){
             log[idx] = log[idx] + 1;
         }
