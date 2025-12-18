@@ -218,12 +218,7 @@ class SAT {
                         return false;
                     }
                     if (!satisfied && count == 1) {
-                        tribool assignment = tribool::None;
-                        if (unassigned_literal > 0){
-                            assignment = tribool::True;
-                        } else {
-                            assignment = tribool::False;
-                        }
+                        tribool assignment = (unassigned_literal > 0) ? tribool::True : tribool::False;
                         stack_push(abs(unassigned_literal));
                         set_assignment(abs(unassigned_literal), assignment);
                         modified = true;
