@@ -69,9 +69,7 @@ class SAT {
             }
             return p >> 1 ? p >> 1 : 1;
         }
-        void update_log(int idx){
-            log[idx]++;
-        }
+        void update_log(int idx) log[idx]++;
         void decay_keys(){
             for(int i = 1; i < nbvars + 1; i++){
                 log[i] = alpha * log[i];
