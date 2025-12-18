@@ -32,14 +32,14 @@ class SAT {
         
     public:
         SAT(){mt_rand.seed(time(NULL));}
-        void setup(int numOfVars, int numOfClauses){
-            nbvars = numOfVars;
-            nbunassigned = numOfVars;
-            unassigned_keys.assign(nbvars + 1, true);
-            umap.assign(nbvars + 1, tribool::None);
-            clauses.reserve(numOfClauses);
-            log.assign(nbvars + 1, 0.0);
-            polarity.assign(nbvars + 1, true);
+        void setup(int nv, int nc){
+            nbvars = nv;
+            nbunassigned = nv;
+            unassigned_keys.assign(nv + 1, true);
+            umap.assign(nv + 1, tribool::None);
+            clauses.reserve(nc);
+            log.assign(nv + 1, 0.0);
+            polarity.assign(nv + 1, true);
         }
         void cold_restart(){
             nbrestarts++;
