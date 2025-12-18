@@ -70,11 +70,7 @@ class SAT {
             return p >> 1 ? p >> 1 : 1;
         }
         void update_log(int idx){log[idx]++;}
-        void decay_keys(){
-            for(int i = 1; i < nbvars + 1; i++){
-                log[i] = alpha * log[i];
-            }
-        }
+        void decay_keys(){for(int i = 1; i < nbvars + 1; i++) log[i] = alpha * log[i];}
         int get_int(int max){return (mt_rand() % max);}
         void reseed(){mt_rand.seed(time(NULL));}
         void parse_line(string line){
