@@ -176,13 +176,13 @@ class SAT {
             }
         }
         bool solve(){
-            bool solution = dpll();
-            if (solution){
+            bool sol = dpll();
+            if (sol){
                 print_assignment();
             } else {
                 cout << "UNSAT" << endl;
             }
-            return solution;
+            return sol;
         }
         void backtrack(int n){
             while (s.size() > n){
