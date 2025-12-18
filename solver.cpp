@@ -74,7 +74,7 @@ class SAT {
                     clause.push_back(n);
                 }
             }
-            clauses.push_back(std::move(clause));
+            clauses.emplace_back(std::move(clause));
         }
         tribool parse_idx(int idx){
             if (umap[abs(idx)] != tribool::None){
