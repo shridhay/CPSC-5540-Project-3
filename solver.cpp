@@ -96,7 +96,6 @@ class SAT {
                 return tribool::None;
             }
         }
-        bool all_assigned(){return nbunassigned == 0;}
         int choose_key(){
             vector<int> temp;
             double maximum = -1.0;
@@ -255,7 +254,7 @@ class SAT {
             }
             if (!unit_propagation()) return false;
             pure_literal_elimination();
-            if (all_assigned()) return check_sat();
+            if (nbunassigned == 0) return check_sat();
             int idx = choose_key();
             int size = s.size();
             stack_push(idx); 
