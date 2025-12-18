@@ -299,17 +299,17 @@ int main(int argc, char *argv[]){
         cout << "Unable to open file: " << filename << endl;
         return 1;
     }
-    string currentLine, p, cnf;
+    string line, p, cnf;
     int nv, nc;
-    while(getline(inputFile, currentLine)){
-        if (currentLine.empty() || currentLine[0] == 'c' || currentLine[0] == '%' || currentLine[0] == '0'){
+    while(getline(inputFile, line)){
+        if (line.empty() || line[0] == 'c' || line[0] == '%' || line[0] == '0'){
             continue;
-        } else if (currentLine[0] == 'p'){
-            stringstream ss(currentLine);
+        } else if (line[0] == 'p'){
+            stringstream ss(line);
             ss >> p >> cnf >> nv >> nc;
             solver.setup(nv, nc);
         } else {
-            solver.parse_line(currentLine);
+            solver.parse_line(line);
         }
     }
     inputFile.close();
