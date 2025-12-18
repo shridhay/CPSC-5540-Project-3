@@ -56,15 +56,15 @@ class SAT {
         int luby(int i) {
             int k = 1, p = 1;
             while (k < i + 1) {
-                k *= 2;
-                p *= 2;
+                k = k << 1;
+                p = p << 1;
             }
             while (k != i + 1) {
-                k /= 2;
-                p /= 2;
+                k = k >> 1;
+                p = p >> 1;
                 if (k < i + 1) {
                     i -= k;
-                    k *= 2;
+                    k = k << 1;
                 }
             }
             return p / 2 ? p / 2 : 1;
