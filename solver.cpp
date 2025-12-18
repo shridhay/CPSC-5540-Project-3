@@ -306,9 +306,9 @@ int main(int argc, char *argv[]){
         } else if (currentLine[0] == 'p'){
             stringstream ss(currentLine);
             string p, cnf;
-            int numOfVars, numOfClauses;
-            ss >> p >> cnf >> numOfVars >> numOfClauses;
-            solver.setup(numOfVars, numOfClauses);
+            int nv, nc;
+            ss >> p >> cnf >> nv >> nc;
+            solver.setup(nv, nc);
         } else {
             solver.parse_line(currentLine);
         }
