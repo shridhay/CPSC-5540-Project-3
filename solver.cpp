@@ -268,13 +268,11 @@ class SAT {
             int idx = choose_key();
             int size = s.size();
             stack_push(idx); 
-            tribool top = polarity[idx] ? tribool::True : tribool::False;
-            set_assignment(idx, top);
+            set_assignment(idx, polarity[idx] ? tribool::True : tribool::False);
             if (dpll()) return true;
             backtrack(size);
             stack_push(idx);
-            tribool bottom = polarity[idx] ? tribool::False : tribool::True;
-            set_assignment(idx, bottom);
+            set_assignment(idx, polarity[idx] ? tribool::False : tribool::True);
             if (dpll()) return true;
             backtrack(size);
             return false;
