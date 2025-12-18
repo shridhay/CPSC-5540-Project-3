@@ -299,14 +299,13 @@ int main(int argc, char *argv[]){
         cout << "Unable to open file: " << filename << endl;
         return 1;
     }
-    string currentLine;
+    string currentLine, p, cnf;
+    int nv, nc;
     while(getline(inputFile, currentLine)){
         if (currentLine.empty() || currentLine[0] == 'c' || currentLine[0] == '%' || currentLine[0] == '0'){
             continue;
         } else if (currentLine[0] == 'p'){
             stringstream ss(currentLine);
-            string p, cnf;
-            int nv, nc;
             ss >> p >> cnf >> nv >> nc;
             solver.setup(nv, nc);
         } else {
