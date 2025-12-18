@@ -61,7 +61,7 @@ class SAT {
                 log[i] = alpha * log[i];
             }
         }
-        int getInt(int max){return (mt_rand() % max);}
+        int get_int(int max){return (mt_rand() % max);}
         void reseed(){mt_rand.seed(time(NULL));}
         void parse_line(string line){
             vector<int> clause;
@@ -110,7 +110,7 @@ class SAT {
                     temp.push_back(i);
                 }
             }
-            return temp[getInt(temp.size())];
+            return temp[get_int(temp.size())];
         }
         bool check_sat(){
             for (const vector<int>& clause : clauses){
