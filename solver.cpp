@@ -274,7 +274,7 @@ class SAT {
 
 int main(int argc, char *argv[]){
     if (argc != 2){
-        cout << "Usage: ./solver <path_to_cnf_file>" << endl;
+        cout << "Usage: ./solver <path/to/cnf/file.cnf>" << endl;
         return 1;
     }
     string filename = argv[1];
