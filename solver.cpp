@@ -67,7 +67,7 @@ class SAT {
                     k = k << 1;
                 }
             }
-            return p / 2 ? p / 2 : 1;
+            return p >> 1 ? p >> 1 : 1;
         }
         void update_log(int idx){
             log[idx] = log[idx] + 1;
