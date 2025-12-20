@@ -154,9 +154,9 @@ class SAT {
         }
         int stack_pop(){
             if (!s.empty()){
-                int t = s[s.size()-1];
+                int top = s[s.size()-1];
                 s.pop_back();
-                return t;
+                return top;
             }
             return 0;
         }
