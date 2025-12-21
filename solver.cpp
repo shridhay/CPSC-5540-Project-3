@@ -215,7 +215,7 @@ class SAT {
                     }
                     if (!satisfied && count == 1) {
                         stack_push(abs(unassigned_literal));
-                        set_assignment(abs(unassigned_literal), (unassigned_literal > 0) ? tribool::True : tribool::False);
+                        set_assignment(abs(unassigned_literal), unassigned_literal > 0 ? tribool::True : tribool::False);
                         modified = true;
                     }
                 }
