@@ -109,12 +109,8 @@ class SAT {
         int choose_key(){
             vector<int> temp;
             double maximum = -1.0;
-            for (int i = 1; i < nbvars + 1; i++){
-                if ((unassigned_keys[i]) && (log[i] > maximum)) maximum = log[i];
-            }
-            for (int i = 1; i < nbvars + 1; i++){
-                if ((unassigned_keys[i]) && (log[i] == maximum)) temp.push_back(i);
-            }
+            for (int i = 1; i < nbvars + 1; i++) if ((unassigned_keys[i]) && (log[i] > maximum)) maximum = log[i];
+            for (int i = 1; i < nbvars + 1; i++) if ((unassigned_keys[i]) && (log[i] == maximum)) temp.push_back(i);
             return temp[get_int(temp.size())];
         }
         bool check_sat(){
