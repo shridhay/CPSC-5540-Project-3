@@ -4,7 +4,6 @@
 #include <cmath>
 #include <vector>
 #include <string>
-#include <unordered_set>
 #include <ctime>
 #include <random>
 
@@ -137,17 +136,14 @@ class SAT {
                 unassigned_keys[idx] = true;
             } else {
                 unassigned_keys[idx] = false;
-                if (b == tribool::True){
-                    polarity[idx] = true;
-                } else if (b == tribool::False){
-                    polarity[idx] = false;
-                }
+                polarity[idx] = (b == tribool::True);
             }
         }
         bool stack_push(int idx){
             s.push_back(idx);
             return true;
         }
+        int stack_top(){ return s.empty() ? 0 : s[s.size()-1];}
         int stack_pop(){
             if (!s.empty()){
                 int top = s[s.size()-1];
@@ -176,12 +172,7 @@ class SAT {
             }
             return sol;
         }
-        void backtrack(int n){
-            while (s.size() > n){
-                int idx = stack_pop();
-                set_assignment(idx, tribool::None);
-            }
-        }
+        void backtrack(int n){while (s.size() > n) set_assignment(stack_pop(), tribool::None);}
         bool unit_propagation() {
             bool modified = true;
             while (modified) {
@@ -219,24 +210,20 @@ class SAT {
             return true; 
         }
         bool pure_literal_elimination(){
-            unordered_set<int> positive;
-            unordered_set<int> negative;
+            vector<uint8_t> p(nbvars + 1, 0);
             for (const vector<int>& clause : clauses) {
-                for (const int& literal : clause) {
+                for (int literal : clause) {  
                     if (parse_idx(literal) == tribool::None){
-                        if (literal > 0){
-                            positive.insert(literal);
-                        } else {
-                            negative.insert(-1 * literal);
-                        }
+                        p[abs(literal)] |= (literal > 0) ? 1 : 2;
                     }
                 }
             }
-            for(int idx = 1; idx < nbvars + 1; idx++){
+            for (int idx = 1; idx <= nbvars; idx++){
                 if (umap[idx] == tribool::None){
-                    if (positive.count(idx) && !negative.count(idx)){
+                    uint8_t t = p[idx];
+                    if (t == 1){ 
                         set_assignment(idx, tribool::True);
-                    } else if (negative.count(idx) && !positive.count(idx)){
+                    } else if (t == 2){  
                         set_assignment(idx, tribool::False);
                     }
                 }
@@ -264,7 +251,6 @@ class SAT {
             return false;
         }
 };
-
 int main(int argc, char *argv[]){
     if (argc != 2){
         cout << "Usage: ./solver <path/to/file.cnf>" << endl;
@@ -279,14 +265,24 @@ int main(int argc, char *argv[]){
     }
     string line, p, cnf;
     int nv, nc;
+    bool did_setup = false;
     while(getline(inputFile, line)){
         if (line.empty() || line[0] == 'c' || line[0] == '%' || line[0] == '0'){
             continue;
         } else if (line[0] == 'p'){
+            if (did_setup){
+                cout << "SAT Solver already set up!" << endl;
+                return 1;
+            }
             stringstream ss(line);
             ss >> p >> cnf >> nv >> nc;
             solver.setup(nv, nc);
+            did_setup = true;
         } else {
+            if (!did_setup){
+                cout << "SAT Solver not yet set up; cannot parse line!" << endl;
+                return 1;
+            }
             solver.parse_line(line);
         }
     }
