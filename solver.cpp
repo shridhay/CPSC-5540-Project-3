@@ -17,7 +17,9 @@ class SAT {
         int nbunassigned;
         int nbconflicts = 0;
         int nbrestarts = 0;
+        int max_restarts = 10000;
         int limit = 4000;
+        int base_limit = 300; 
         double alpha = 0.92;
         double alpha_increment = 1.01; 
         double alpha_max = 0.99;
@@ -39,6 +41,7 @@ class SAT {
             clauses.reserve(nc);
             log.assign(nv + 1, 0.0);
             polarity.assign(nv + 1, true);
+            limit = base_limit * luby(0);
         }
         void cold_restart(){
             nbrestarts++;
@@ -51,8 +54,9 @@ class SAT {
             nbunassigned = nbvars;
             alpha = min(alpha_max, alpha * alpha_increment);
             decay_keys();
+            limit = base_limit * luby(nbrestarts);
         }
-        int luby(int i) {
+        inline int luby(int i) {
             int k = 1, p = 1;
             while (k < i + 1) {
                 k = k << 1;
@@ -62,14 +66,14 @@ class SAT {
                 k = k >> 1;
                 p = p >> 1;
                 if (k < i + 1) {
-                    i -= k;
+                    i = i - k;
                     k = k << 1;
                 }
             }
             return p >> 1 ? p >> 1 : 1;
         }
-        void update_log(int idx){log[idx]++;}
-        void decay_keys(){for(int i = 1; i < nbvars + 1; i++) log[i] = alpha * log[i];}
+        inline void update_log(int idx){log[idx]++;}
+        inline void decay_keys(){for(int i = 1; i < nbvars + 1; i++) log[i] *= alpha;}
         int get_int(int max){return (mt_rand() % max);}
         void reseed(){mt_rand.seed(time(NULL));}
         void parse_line(string line){
@@ -85,7 +89,7 @@ class SAT {
             }
             clauses.emplace_back(std::move(clause));
         }
-        tribool parse_idx(int idx){
+        inline tribool parse_idx(int idx){
             if (umap[abs(idx)] != tribool::None){
                 tribool value = umap[abs(idx)];
                 if (idx > 0){
@@ -125,7 +129,7 @@ class SAT {
             }
             return true;
         }
-        void set_assignment(int idx, tribool b){
+        inline void set_assignment(int idx, tribool b){
             if (umap[idx] == tribool::None && b != tribool::None){
                 nbunassigned--;
             } else if (umap[idx] != tribool::None && b == tribool::None) {
@@ -139,12 +143,11 @@ class SAT {
                 polarity[idx] = (b == tribool::True);
             }
         }
-        bool stack_push(int idx){
+        inline bool stack_push(int idx){
             s.push_back(idx);
             return true;
         }
-        int stack_top(){ return s.empty() ? 0 : s[s.size()-1];}
-        int stack_pop(){
+        inline int stack_pop(){
             if (!s.empty()){
                 int top = s[s.size()-1];
                 s.pop_back();
@@ -220,10 +223,9 @@ class SAT {
             }
             for (int idx = 1; idx <= nbvars; idx++){
                 if (umap[idx] == tribool::None){
-                    uint8_t t = p[idx];
-                    if (t == 1){ 
+                    if (p[idx] == 1){ 
                         set_assignment(idx, tribool::True);
-                    } else if (t == 2){  
+                    } else if (p[idx] == 2){  
                         set_assignment(idx, tribool::False);
                     }
                 }
@@ -231,12 +233,15 @@ class SAT {
             return true;
         }
         bool dpll(){
+            if (nbrestarts > max_restarts) {  
+                return false;  
+            }
             if (nbconflicts >= limit){
                 cold_restart();
                 return dpll();
             }
             if (!unit_propagation()) return false;
-            pure_literal_elimination();
+            // pure_literal_elimination();
             if (nbunassigned == 0) return check_sat();
             int idx = choose_key();
             int size = s.size();
@@ -251,6 +256,7 @@ class SAT {
             return false;
         }
 };
+
 int main(int argc, char *argv[]){
     if (argc != 2){
         cout << "Usage: ./solver <path/to/file.cnf>" << endl;
@@ -271,7 +277,7 @@ int main(int argc, char *argv[]){
             continue;
         } else if (line[0] == 'p'){
             if (did_setup){
-                cout << "SAT Solver already set up!" << endl;
+                cout << "SAT Solver already set up; cannot set up sat more than once!" << endl;
                 return 1;
             }
             stringstream ss(line);
